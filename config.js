@@ -12,7 +12,7 @@ window.BRAND_NAME = "Electromotive Inventory";
    Replace this with the final "emi-worker" Cloudflare Worker URL
    once it is deployed. This is the ONLY place the API base URL
    should ever be defined. */
-window.EMI_API_URL = "https://emi-worker.YOUR-SUBDOMAIN.workers.dev";
+window.EMI_API_URL = "https://emi-backend.devpandey618.workers.dev";
 
 /* ── CONTACT / ORDERING ──
    WhatsApp is the only ordering method. Replace this placeholder
