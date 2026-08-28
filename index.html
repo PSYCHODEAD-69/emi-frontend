@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EV Scooter Spare Parts | Electromotive Inventory</title>
+<meta name="description" content="Electromotive Inventory supplies genuine-fit spare parts for EV scooters — brakes, electricals, body panels and more. Order easily via WhatsApp.">
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0ea86b">
+  <meta property="og:image" content="/assets/logo.png">
+  <meta property="og:title" content="EV Scooter Spare Parts | Electromotive Inventory">
+  <meta property="og:description" content="Genuine-fit spare parts for EV scooters — brakes, electricals, body panels and more. Order via WhatsApp.">
+
+  <!-- Structured Data (JSON-LD) for Google Organization & Logo Crawling -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Electromotive Inventory",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "/assets/logo.png",
+      "caption": "Electromotive Inventory Logo",
+      "width": "512",
+      "height": "512"
+    },
+    "image": "/assets/logo.png"
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <!-- FLOATING WHATSAPP -->
+  <a href="#" class="float-wa" id="floatWA" title="Order on WhatsApp">
+    <div class="float-wa-ring"></div>
+    <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">
+      <img src="assets/logo.png" alt="Electromotive Inventory Logo" class="logo-icon" width="44" height="44" loading="eager">
+      <span class="logo-text logo-text-one-line">Electromotive<em> Inventory</em></span>
+      <span class="logo-text logo-text-two-line">Electromotive<br><em>Inventory</em></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#products">Products</a></li>
+      <li><a href="#how">Process</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+      <li><a href="#contacts">Contact us</a></li>
+      <li><a href="#products" class="nav-cta">Order Now</a></li>
+    </ul>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch theme" aria-label="Switch theme"></button>
+    <button class="nav-cart" id="cartBtn" onclick="openCart()" title="View Cart">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="cart-count" id="cartCount"></span>
+    </button>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="drawer" id="drawer">
+      <button class="drawer-close" id="drawerClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div class="drawer-logo">Electromotive <em>Inventory</em></div>
+      <ul class="drawer-links">
+        <li><a href="#products" class="dl">Products</a></li>
+        <li><a href="#how" class="dl">Process</a></li>
+        <li><a href="#testimonials" class="dl">Reviews</a></li>
+        <li><a href="#contacts" class="dl">Contact us</a></li>
+        <li><a href="#products" class="dl dl-cta">Order Now</a></li>
+      </ul>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg-text">VOLT</div>
+    <div class="hero-left">
+      <div class="hero-tag"><span class="tag-dot"></span> EV Scooter Spare Parts</div>
+      <h1>Keep Your<br>Ride <span class="red">Running</span><br><span class="h-outline">Strong.</span></h1>
+      <p class="hero-sub">Genuine-fit spare parts for your EV scooter &mdash; brakes, electricals, body panels &amp; more. Order easily via WhatsApp.</p>
+      <div class="hero-btns">
+        <a href="#products" class="btn-primary">Order Now</a>
+        <a href="#products" class="btn-outline">See Parts</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num" data-target="500" data-suffix="+">0+</span><span class="stat-label">Parts Listed</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num" data-target="7" data-suffix="+">0+</span><span class="stat-label">Models Supported</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">Pan</span><span class="stat-label">India Delivery</span></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-card-stack">
+        <div class="h-card card-back">
+          <img src="assets/logo.png" alt="Battery Pack"/>
+          <div class="hc-label">Battery Packs</div>
+        </div>
+        <div class="h-card card-mid">
+          <img src="assets/logo.png" alt="Brake Assembly"/>
+          <div class="hc-label">Brake Assemblies</div>
+        </div>
+        <div class="h-card card-front">
+          <img src="assets/logo.png" alt="Body Panel"/>
+          <div class="hc-label">Body Panels</div>
+        </div>
+        <div class="hero-badge">
+          <div class="hb-spin">GENUINE<br>FIT</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marquee">
+      <span>BRAKING SYSTEMS</span><span class="mx">+</span>
+      <span>ELECTRICALS</span><span class="mx">+</span>
+      <span>BATTERY PACKS</span><span class="mx">+</span>
+      <span>BODY PANELS</span><span class="mx">+</span>
+      <span>SUSPENSION</span><span class="mx">+</span>
+      <span>MOTOR PARTS</span><span class="mx">+</span>
+      <span>CHARGERS</span><span class="mx">+</span>
+      <span>WIRING HARNESS</span><span class="mx">+</span>
+      <span>TYRES &amp; WHEELS</span><span class="mx">+</span>
+      <span>DISPLAY UNITS</span><span class="mx">+</span>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <section id="products">
+    <div class="sec-header fade-up">
+      <div>
+        <div class="sec-tag">What We Print</div>
+        <h2 class="sec-title">Our <span class="h-outline">Products</span></h2>
+      </div>
+    </div>
+
+    <!-- Search + Filter -->
+    <div class="products-toolbar fade-up">
+      <div class="search-bar-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="productSearchInput" class="search-bar-input" placeholder="Search products..." oninput="handleProductSearch(this.value)"/>
+      </div>
+      <button class="filter-toggle-btn" type="button" onclick="toggleFilterPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filter
+      </button>
+    </div>
+
+    <!-- Price Filter Panel -->
+    <div class="filter-panel" id="filterPanel">
+      <div class="filter-panel-inner">
+        <div class="filter-panel-title">Filter by Price</div>
+        <div class="price-presets">
+          <button type="button" class="price-preset-btn" data-min="0" data-max="200" onclick="applyPricePreset(0, 200, this)">Under ₹200</button>
+          <button type="button" class="price-preset-btn" data-min="0" data-max="500" onclick="applyPricePreset(0, 500, this)">Under ₹500</button>
+          <button type="button" class="price-preset-btn" data-min="0" data-max="1000" onclick="applyPricePreset(0, 1000, this)">Under ₹1000</button>
+        </div>
+        <div class="price-slider-row">
+          <div class="price-slider-label">
+            <span>Custom range</span>
+            <span class="price-slider-value" id="priceSliderValue">Up to ₹2000</span>
+          </div>
+          <input type="range" id="priceMaxSlider" class="price-slider" min="0" max="2000" step="10" value="2000"
+                 oninput="handlePriceSliderInput(this.value)" onchange="applyPriceSliderRange(this.value)"/>
+          <div class="price-slider-ticks"><span>₹0</span><span>₹2000</span></div>
+        </div>
+        <button type="button" class="price-filter-clear" onclick="clearPriceFilter()">Clear filter</button>
+      </div>
+    </div>
+
+    <!-- Category Filter — rendered dynamically by script.js from /api/categories -->
+    <div class="cat-grid" id="catGrid">
+      <button class="cat-card active" data-cat="all">
+        <div class="cat-img-wrap"><img src="assets/logo.png" alt="All"/></div>
+        <div class="cat-name">All</div>
+        <span class="cat-badge" id="badge-all">0</span>
+      </button>
+    </div>
+
+    <!-- Products Grid — skeleton shown until loaded -->
+    <div class="products-grid" id="productsGrid">
+      <div class="product-skeleton"></div>
+      <div class="product-skeleton"></div>
+      <div class="product-skeleton"></div>
+      <div class="product-skeleton"></div>
+      <div class="product-skeleton"></div>
+      <div class="product-skeleton"></div>
+    </div>
+
+    <div id="noProducts" style="display:none;text-align:center;padding:3rem;color:#888;">
+      <p style="font-size:1.1rem;">No products yet. Check back soon!</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="sec-header fade-up">
+      <div>
+        <div class="sec-tag light">How It Works</div>
+        <h2 class="sec-title light">Super <span class="h-outline-y">Simple</span></h2>
+      </div>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="26" height="26" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="step-title">Chat With Us</div>
+        <div class="step-desc">Click any Order Now button &mdash; WhatsApp opens with your chosen part and compatible model already mentioned.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="26" height="26" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+        <div class="step-title">Select Your Model</div>
+        <div class="step-desc">Pick your EV scooter model so we can confirm the part is a compatible fit.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" width="26" height="26" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="step-title">Confirm &amp; Pay</div>
+        <div class="step-desc">We confirm availability and pricing. Pay via UPI, card, or bank transfer.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="26" height="26" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+        <div class="step-title">Get Delivered</div>
+        <div class="step-desc">Carefully packed and shipped to your door &mdash; anywhere in India!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials">
+    <div class="sec-header fade-up">
+      <div>
+        <div class="sec-tag">Happy Customers</div>
+        <h2 class="sec-title">What They <span class="h-outline">Say</span></h2>
+      </div>
+    </div>
+
+    <!-- Latest 3 reviews from API -->
+    <div class="testi-grid" id="featuredReviews">
+      <div class="testi-skeleton"></div>
+      <div class="testi-skeleton"></div>
+      <div class="testi-skeleton"></div>
+    </div>
+
+    <!-- Reviews CTA -->
+    <div class="reviews-cta-row">
+      <a href="reviews.html?focus=add" class="btn-primary reviews-cta-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17" style="margin-right:7px;vertical-align:middle"><path d="M12 5v14M5 12h14"/></svg>
+        Add Your Review
+      </a>
+      <a href="reviews.html" class="btn-outline reviews-cta-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17" style="margin-right:7px;vertical-align:middle"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        View All Reviews
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand-col">
+        <a href="#" class="footer-logo-wrap">
+          <img src="assets/logo.png" alt="Electromotive Inventory Logo" class="logo-icon" width="44" height="44" loading="lazy">
+          <span class="footer-brand-name">Electromotive <em>Inventory</em></span>
+        </a>
+        <p class="footer-tagline">Genuine-fit spare parts for EV scooters &mdash; brakes, electricals, body panels and more.</p>
+        <div class="social-row">
+          <a href="#" id="footerWA" class="soc-btn" title="WhatsApp">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </a>
+          <a href="#" id="footerInstagram" class="soc-btn" title="Instagram">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </a>
+          <a href="#" id="footerEmail" class="soc-btn" title="Email">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <div class="fcol-title">Quick Links</div>
+        <ul class="flinks">
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="reviews.html">All Reviews</a></li>
+          <li><a href="#testimonials">Testimonials</a></li>
+          <li><button class="fbtn" data-product="Bulk / Fleet Order" data-price="Custom pricing" data-desc="Bulk order for fleets or service centers" onclick="orderProduct(this)">Bulk Orders</button></li>
+        </ul>
+      </div>
+      <div>
+        <div class="fcol-title" id="contacts">Contact</div>
+        <a href="#" id="footerWA2" class="fcontact">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="rgba(255,255,255,0.5)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Click here to WhatsApp Us
+        </a>
+        <a href="#" id="footerEmail2" class="fcontact">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span id="footerEmailText"></span>
+        </a>
+        <a href="#" id="footerInstagram2" class="fcontact">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="rgba(255,255,255,0.5)"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          <span id="footerInstagramText"></span>
+        </a>
+        <div class="fcontact no-link">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          India
+        </div>
+        <div class="fcontact no-link">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Mon&ndash;Sat, 8am&ndash;10pm IST
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Electromotive Inventory &mdash; All rights reserved</span>
+    </div>
+  </footer>
+
+  <!-- CART DRAWER -->
+  <div id="cart-backdrop" onclick="closeCart()"></div>
+  <div id="cart-drawer">
+    <div class="cart-header">
+      <span class="cart-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="vertical-align:middle;margin-right:6px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Your Cart
+      </span>
+      <button class="cart-close-btn" onclick="closeCart()">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" width="48" height="48"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <p>Your cart is empty!</p>
+        <small>Add products to get started</small>
+      </div>
+    </div>
+    <div class="cart-footer" id="cartFooter" style="display:none">
+      <div class="cart-total-row">
+        <span class="cart-total-label">Order Total</span>
+        <span class="cart-total-price" id="cartTotal">Rs.0</span>
+      </div>
+      <button class="cart-order-btn cart-wa-btn" onclick="cartOrderWA()">
+        <svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Order via WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- Media Lightbox (full-size image/video view) -->
+  <div class="media-lightbox-overlay" id="mediaLightboxOverlay" onclick="if(event.target === this) closeMediaLightbox()">
+    <div class="media-lightbox-box">
+      <button class="media-lightbox-close" type="button" onclick="closeMediaLightbox()">✕</button>
+      <div class="media-lightbox-content" id="mediaLightboxContent"></div>
+      <div class="media-lightbox-nav" id="mediaLightboxNav">
+        <button type="button" onclick="changeLightboxMedia(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+        <button type="button" onclick="changeLightboxMedia(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

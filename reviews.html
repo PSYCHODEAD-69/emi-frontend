@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Reviews | Electromotive Inventory</title>
+<meta name="description" content="Real reviews from Electromotive Inventory customers — EV scooter spare parts delivered across India. See why riders trust us.">
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0ea86b">
+
+  <!-- Structured Data (JSON-LD) for Google Organization & Logo Crawling -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Electromotive Inventory",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "/assets/logo.png",
+      "caption": "Electromotive Inventory Logo",
+      "width": "512",
+      "height": "512"
+    },
+    "image": "/assets/logo.png"
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="config.js"></script>
+  <style>
+    /* ── REVIEWS PAGE — hardcoded light theme colors ── */
+    :root {
+      --rv-bg:      #f5f2ec;
+      --rv-surface: #ffffff;
+      --rv-border:  #e8e4da;
+      --rv-text:    #1a1714;
+      --rv-muted:   #888;
+      --rv-accent:  #ff4d2e;
+      --rv-font-d:  'Playfair Display', serif;
+      --rv-font-b:  'DM Sans', sans-serif;
+    }
+
+    .reviews-page-hero {
+      padding: 120px 5vw 60px;
+      background: var(--rv-bg);
+      text-align: center;
+    }
+    .reviews-page-hero .sec-tag { margin: 0 auto 12px; }
+    .reviews-page-hero h1 { font-family: var(--rv-font-d); font-size: clamp(2rem,5vw,3.5rem); margin: 0 0 12px; color: var(--rv-text); }
+    .reviews-page-hero p { color: var(--rv-muted); font-size: 1.05rem; }
+
+    /* ── ADD REVIEW FORM ── */
+    .add-review-section {
+      background: var(--rv-surface);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 640px;
+      margin: 0 auto 3rem;
+      border: 1px solid var(--rv-border);
+    }
+    .add-review-section h2 { font-family: var(--rv-font-d); font-size: 1.6rem; margin: 0 0 1.5rem; color: var(--rv-text); }
+
+    .star-picker { display: flex; gap: 8px; margin-bottom: 1.2rem; }
+    .star-picker .sp { font-size: 2rem; cursor: pointer; color: #ddd; transition: color .15s, transform .15s; line-height:1; user-select:none; }
+    .star-picker .sp.active, .star-picker .sp.hover { color: #f5a623; transform: scale(1.15); }
+
+    .rev-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--rv-bg); border: 1.5px solid var(--rv-border);
+      border-radius: 10px; padding: 12px 14px;
+      font-family: var(--rv-font-b); font-size: 0.95rem;
+      color: var(--rv-text); outline: none; transition: border-color .2s;
+      margin-bottom: 1rem;
+    }
+    .rev-input:focus { border-color: var(--rv-accent); }
+    textarea.rev-input { resize: vertical; min-height: 90px; }
+
+    .file-upload-area {
+      border: 2px dashed var(--rv-border); border-radius: 12px;
+      padding: 1.5rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; margin-bottom: 1rem;
+      background: var(--rv-bg);
+    }
+    .file-upload-area:hover { border-color: var(--rv-accent); background: rgba(255,77,46,.04); }
+    .file-upload-area.drag-over { border-color: var(--rv-accent); background: rgba(255,77,46,.08); }
+    .file-upload-area input { display: none; }
+    .file-upload-area .fup-icon { font-size: 2rem; margin-bottom: 8px; }
+    .file-upload-area .fup-text { font-size: 0.9rem; color: var(--rv-muted); }
+    .file-upload-area .fup-text span { color: var(--rv-accent); font-weight: 600; }
+
+    .file-preview-wrap { margin-bottom: 1rem; }
+    .file-preview-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--rv-bg); border: 1px solid var(--rv-border);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+    }
+    .file-preview-item img, .file-preview-item video {
+      width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
+    }
+    .fpi-name { flex: 1; font-size: 0.88rem; color: var(--rv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fpi-remove { background: none; border: none; color: #f44; cursor: pointer; font-size: 1.2rem; padding: 0 4px; }
+
+    .submit-review-btn {
+      width: 100%; padding: 14px; background: var(--rv-accent);
+      color: white; border: none; border-radius: 12px;
+      font-family: var(--rv-font-b); font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+    }
+    .submit-review-btn:hover { opacity: .88; }
+    .submit-review-btn:active { transform: scale(.98); }
+    .submit-review-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── ALL REVIEWS GRID ── */
+    .all-reviews-section { max-width: 1100px; margin: 0 auto; padding: 0 5vw 4rem; background: var(--rv-bg); }
+    .all-reviews-section h2 { font-family: var(--rv-font-d); font-size: 1.8rem; margin-bottom: 2rem; color: var(--rv-text); }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .review-card {
+      background: var(--rv-surface); border-radius: 16px;
+      padding: 1.5rem; border: 1px solid var(--rv-border);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .review-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+
+    .rc-stars { color: #f5a623; font-size: 1.1rem; margin-bottom: 8px; letter-spacing: 2px; }
+    .rc-text { font-size: 0.95rem; color: var(--rv-text); line-height: 1.6; margin-bottom: 1rem; }
+    .rc-author { display: flex; align-items: center; gap: 10px; }
+    .rc-av {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--rv-accent); color: white; display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .rc-name { font-weight: 600; font-size: 0.9rem; color: var(--rv-text); }
+    .rc-date { font-size: 0.78rem; color: var(--rv-muted); }
+
+    /* Media preview in review card — supports multiple photos/videos */
+    .rc-media {
+      margin-bottom: 1rem; border-radius: 12px; overflow: hidden;
+      display: grid; gap: 4px;
+    }
+    .rc-media.rc-media-1 { grid-template-columns: 1fr; }
+    .rc-media.rc-media-2 { grid-template-columns: 1fr 1fr; }
+    .rc-media.rc-media-3,
+    .rc-media.rc-media-4-plus { grid-template-columns: 1fr 1fr; }
+    .rc-media-item { position: relative; cursor: pointer; }
+    .rc-media-item img,
+    .rc-media-item video {
+      width: 100%; height: 140px; object-fit: cover;
+      display: block; border-radius: 8px; transition: transform .3s;
+    }
+    .rc-media.rc-media-1 img,
+    .rc-media.rc-media-1 video { height: 220px; }
+    .rc-media-item:hover img { transform: scale(1.03); }
+    .rc-media-more {
+      position: absolute; inset: 0; background: rgba(0,0,0,.55);
+      color: #fff; font-size: 1.1rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+    }
+    /* Mute/unmute button on autoplaying review video previews */
+    .rc-mute-btn {
+      position: absolute; top: 6px; right: 6px; width: 28px; height: 28px;
+      border: none; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff;
+      cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .rc-mute-btn:hover { background: rgba(0,0,0,.75); }
+    .rc-mute-btn svg { width: 14px; height: 14px; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,.92);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    #lightboxContent { position: relative; max-width: 92vw; max-height: 92vh; display: flex; align-items: center; justify-content: center; }
+    #lightboxContent img,
+    #lightboxContent video { max-width: 92vw; max-height: 92vh; border-radius: 12px; }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #000; border: none; color: #fff;
+      font-size: 1.8rem; cursor: pointer; line-height: 1; z-index: 3;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-nav-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; padding: 0; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.35); background: rgba(0,0,0,.7); color: #fff; font-size: 2rem;
+      line-height: 1; cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .lightbox-nav-btn:hover { background: var(--rv-accent); border-color: var(--rv-accent); }
+    }
+    .lightbox-nav-btn:active { background: var(--rv-accent); border-color: var(--rv-accent); }
+    .lightbox-prev { left: 16px; }
+    .lightbox-next { right: 16px; }
+    /* Custom mute/unmute button inside the lightbox video */
+    .lb-mute-btn {
+      position: absolute; bottom: 16px; right: 16px; width: 38px; height: 38px;
+      border: none; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff;
+      cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .lb-mute-btn:hover { background: rgba(0,0,0,.75); }
+    .lb-mute-btn svg { width: 18px; height: 18px; }
+
+    /* Upload progress */
+    .upload-progress { margin-bottom: 1rem; }
+    .up-bar-wrap { background: var(--rv-border); border-radius: 8px; height: 6px; overflow: hidden; }
+    .up-bar { height: 100%; background: var(--rv-accent); border-radius: 8px; transition: width .3s; width: 0%; }
+    .up-label { font-size: 0.82rem; color: var(--rv-muted); margin-top: 4px; }
+
+    /* Loading states */
+    .reviews-loading { text-align: center; padding: 3rem; color: var(--rv-muted); }
+    .no-reviews { text-align: center; padding: 3rem; color: var(--rv-muted); }
+
+    .reviews-cta-bottom {
+      text-align: center; margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid var(--rv-border);
+    }
+
+    @media (max-width: 600px) {
+      .add-review-section { padding: 1.5rem; }
+      .reviews-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body style="background:#f5f2ec;">
+
+  <!-- FLOATING WHATSAPP -->
+  <a href="#" class="float-wa" id="floatWA" title="Order on WhatsApp">
+    <div class="float-wa-ring"></div>
+    <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/logo.png" alt="Electromotive Inventory Logo" class="logo-icon" width="44" height="44" loading="eager">
+      <span class="logo-text logo-text-one-line">Electromotive<em> Inventory</em></span>
+      <span class="logo-text logo-text-two-line">Electromotive<br><em>Inventory</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#products">Products</a></li>
+      <li><a href="index.html#how">Process</a></li>
+      <li><a href="reviews.html" style="color:var(--accent)">Reviews</a></li>
+      <li><a href="index.html#contacts">Contact us</a></li>
+      <li><a href="index.html#products" class="nav-cta">Order Now</a></li>
+    </ul>
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch theme" aria-label="Switch theme"></button>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="drawer" id="drawer">
+      <button class="drawer-close" id="drawerClose" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div class="drawer-logo">Electromotive <em>Inventory</em></div>
+      <ul class="drawer-links">
+        <li><a href="index.html#products" class="dl">Products</a></li>
+        <li><a href="index.html#how" class="dl">Process</a></li>
+        <li><a href="reviews.html" class="dl">Reviews</a></li>
+        <li><a href="index.html#contacts" class="dl">Contact us</a></li>
+        <li><a href="index.html#products" class="dl dl-cta">Order Now</a></li>
+      </ul>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  </nav>
+
+  <!-- PAGE HERO -->
+  <div class="reviews-page-hero">
+    <div class="sec-tag">Customer Reviews</div>
+    <h1>What Our <span class="red">Customers</span> Say</h1>
+    <p>Real reviews from real people who ordered from Electromotive Inventory.</p>
+  </div>
+
+  <!-- ADD REVIEW FORM -->
+  <div style="padding: 0 5vw; max-width: 1100px; margin: 0 auto;">
+    <div class="add-review-section" id="addReviewSection">
+      <h2>✍️ Share Your Experience</h2>
+
+      <!-- Star Rating -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:.9rem;color:#888;display:block;margin-bottom:6px;">Your Rating *</label>
+        <div class="star-picker" id="starPicker">
+          <span class="sp" data-val="1">★</span>
+          <span class="sp" data-val="2">★</span>
+          <span class="sp" data-val="3">★</span>
+          <span class="sp" data-val="4">★</span>
+          <span class="sp" data-val="5">★</span>
+        </div>
+      </div>
+
+      <input type="text" class="rev-input" id="revName" placeholder="Your Name *" maxlength="60" autocomplete="name"/>
+      <textarea class="rev-input" id="revText" placeholder="Tell us about your experience... *" maxlength="1000"></textarea>
+
+      <!-- File Upload -->
+      <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('revFile').click()">
+        <input type="file" id="revFile" accept="image/*,video/*" multiple/>
+        <div class="fup-icon">📎</div>
+        <div class="fup-text">
+          <span>Click or drag</span> to attach photo/video (optional)<br>
+          <small>Max 40MB per file · JPG, PNG, GIF, MP4, MOV</small>
+        </div>
+      </div>
+
+      <!-- File Preview -->
+      <div class="file-preview-wrap" id="filePreviewWrap"></div>
+
+      <!-- Upload Progress -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="up-bar-wrap"><div class="up-bar" id="upBar"></div></div>
+        <div class="up-label" id="upLabel">Uploading...</div>
+      </div>
+
+      <button class="submit-review-btn" id="submitReviewBtn" onclick="submitReview()">
+        Submit Review
+      </button>
+    </div>
+  </div>
+
+  <!-- ALL REVIEWS -->
+  <div class="all-reviews-section">
+    <h2 id="reviewsHeading">All Reviews</h2>
+
+    <div class="reviews-loading" id="reviewsLoading">
+      <div class="product-skeleton" style="height:200px;border-radius:16px;margin-bottom:1rem;"></div>
+      <div class="product-skeleton" style="height:200px;border-radius:16px;margin-bottom:1rem;"></div>
+      <div class="product-skeleton" style="height:200px;border-radius:16px;"></div>
+    </div>
+
+    <div class="reviews-grid" id="reviewsGrid" style="display:none"></div>
+
+    <div class="no-reviews" id="noReviews" style="display:none">
+      <p style="font-size:1.1rem;">No reviews yet. Be the first to review!</p>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="reviews-cta-bottom">
+      <p style="color:#888;margin-bottom:1rem;">Had a great experience? Let others know!</p>
+      <button class="btn-primary" onclick="scrollToForm()" style="display:inline-flex;align-items:center;gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><path d="M12 5v14M5 12h14"/></svg>
+        Add Your Review
+      </button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" onclick="if(event.target===this) closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <button class="lightbox-nav-btn lightbox-prev" id="lightboxPrev" onclick="changeLightboxMedia(-1)" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+    <div id="lightboxContent"></div>
+    <button class="lightbox-nav-btn lightbox-next" id="lightboxNext" onclick="changeLightboxMedia(1)" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+  </div>
+
+  <script>
+    const API = window.EMI_API_URL;
+    let selectedRating = 0;
+    let selectedFiles  = [];
+
+    /* ── INIT ── */
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initNavbar();
+      initHamburger();
+      initWALinks();
+      loadReviews();
+      initStarPicker();
+      initFileUpload();
+
+      // If ?focus=add in URL, scroll to form and focus name input
+      if (new URLSearchParams(location.search).get('focus') === 'add') {
+        setTimeout(() => {
+          document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => document.getElementById('revName').focus(), 600);
+        }, 300);
+      }
+    });
+
+    function scrollToForm() {
+      document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => document.getElementById('revName').focus(), 500);
+    }
+
+    /* ── STAR PICKER ── */
+    function initStarPicker() {
+      const stars = document.querySelectorAll('.sp');
+      stars.forEach(s => {
+        s.addEventListener('mouseenter', () => {
+          const v = parseInt(s.dataset.val);
+          stars.forEach(x => x.classList.toggle('hover', parseInt(x.dataset.val) <= v));
+        });
+        s.addEventListener('mouseleave', () => {
+          stars.forEach(x => x.classList.remove('hover'));
+        });
+        s.addEventListener('click', () => {
+          selectedRating = parseInt(s.dataset.val);
+          stars.forEach(x => x.classList.toggle('active', parseInt(x.dataset.val) <= selectedRating));
+        });
+      });
+    }
+
+    /* ── FILE UPLOAD ── */
+    function initFileUpload() {
+      const area = document.getElementById('fileUploadArea');
+      const inp  = document.getElementById('revFile');
+
+      inp.addEventListener('change', e => handleFiles(e.target.files));
+
+      area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+      area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+      area.addEventListener('drop', e => {
+        e.preventDefault(); area.classList.remove('drag-over');
+        handleFiles(e.dataTransfer.files);
+      });
+    }
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        if (file.size > 40 * 1024 * 1024) {
+          showToast(`${file.name} is too large (max 40MB)`); return;
+        }
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+          showToast('Only images and videos allowed'); return;
+        }
+        selectedFiles.push(file);
+      });
+      renderFilePreviews();
+    }
+
+    function renderFilePreviews() {
+      const wrap = document.getElementById('filePreviewWrap');
+      wrap.innerHTML = '';
+      selectedFiles.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'file-preview-item';
+        const isVideo = file.type.startsWith('video/');
+        const url = URL.createObjectURL(file);
+        item.innerHTML = `
+          ${isVideo
+            ? `<video src="${url}" muted style="width:56px;height:56px;object-fit:cover;border-radius:8px;"></video>`
+            : `<img src="${url}" alt="preview" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">`}
+          <span class="fpi-name">${file.name}</span>
+          <span style="font-size:.78rem;color:#888;flex-shrink:0;">${(file.size/1024/1024).toFixed(1)}MB</span>
+          <button class="fpi-remove" onclick="removeFile(${idx})">✕</button>
+        `;
+        wrap.appendChild(item);
+      });
+    }
+
+    function removeFile(idx) {
+      selectedFiles.splice(idx, 1);
+      renderFilePreviews();
+    }
+
+    /* ── SUBMIT REVIEW ── */
+    async function submitReview() {
+      const name   = document.getElementById('revName').value.trim();
+      const text   = document.getElementById('revText').value.trim();
+      const btn    = document.getElementById('submitReviewBtn');
+
+      if (!selectedRating) { showToast('Please select a star rating!'); return; }
+      if (!name)           { showToast('Please enter your name!'); document.getElementById('revName').focus(); return; }
+      if (!text)           { showToast('Please write your review!'); document.getElementById('revText').focus(); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      // Upload every selected file (not just the first one)
+      const media = [];
+      if (selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          try {
+            const result = await uploadReviewMedia(file, i + 1, selectedFiles.length);
+            media.push({
+              url:  result.url,
+              key:  result.key,
+              type: file.type.startsWith('video/') ? 'video' : 'image',
+            });
+          } catch (err) {
+            showToast(`"${file.name}" failed to upload. Continuing with the rest.`);
+          }
+        }
+      }
+
+      try {
+        const res = await fetch(`${API}/api/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, rating: selectedRating, text, media })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('✓ Review submitted! Thank you!');
+          // Reset form
+          document.getElementById('revName').value = '';
+          document.getElementById('revText').value = '';
+          selectedRating = 0;
+          selectedFiles  = [];
+          document.querySelectorAll('.sp').forEach(s => s.classList.remove('active'));
+          document.getElementById('filePreviewWrap').innerHTML = '';
+          document.getElementById('revFile').value = '';
+          // Prepend new review
+          prependReview(data.review);
+        } else {
+          showToast(data.error || 'Submission failed. Please try again.');
+        }
+      } catch {
+        showToast('Network error. Please try again.');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Submit Review';
+    }
+
+    async function uploadReviewMedia(file, fileIndex, totalFiles) {
+      const prog  = document.getElementById('uploadProgress');
+      const bar   = document.getElementById('upBar');
+      const label = document.getElementById('upLabel');
+      prog.style.display = 'block';
+
+      const filePrefix = (totalFiles && totalFiles > 1) ? `File ${fileIndex}/${totalFiles}: ` : '';
+
+      // Use XHR for progress tracking
+      return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'reviews');
+
+        const xhr = new XMLHttpRequest();
+        const token = localStorage.getItem('pm_token') || '';
+
+        xhr.upload.addEventListener('progress', e => {
+          if (e.lengthComputable) {
+            const pct = Math.round(e.loaded / e.total * 100);
+            bar.style.width  = pct + '%';
+            label.textContent = `${filePrefix}Uploading... ${pct}%`;
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          prog.style.display = 'none';
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) resolve(data);
+            else reject(new Error(data.error));
+          } catch { reject(new Error('Upload failed')); }
+        });
+
+        xhr.addEventListener('error', () => { prog.style.display = 'none'; reject(new Error('Network error')); });
+
+        xhr.open('POST', `${API}/api/upload/review-media`);
+        // Public endpoint — no auth needed for review media
+        xhr.send(formData);
+      });
+    }
+
+    /* ── LOAD REVIEWS ── */
+    async function loadReviews() {
+      try {
+        const res     = await fetch(`${API}/api/reviews`);
+        const reviews = await res.json();
+
+        document.getElementById('reviewsLoading').style.display = 'none';
+
+        if (!reviews.length) {
+          document.getElementById('noReviews').style.display = 'block';
+          document.getElementById('reviewsHeading').textContent = 'Reviews (0)';
+          return;
+        }
+
+        document.getElementById('reviewsHeading').textContent = `All Reviews (${reviews.length})`;
+        const grid = document.getElementById('reviewsGrid');
+        grid.style.display = 'grid';
+        grid.innerHTML = reviews.map(r => renderReviewCard(r)).join('');
+
+      } catch {
+        document.getElementById('reviewsLoading').style.display = 'none';
+        document.getElementById('noReviews').style.display = 'block';
+        document.getElementById('noReviews').innerHTML = '<p>Could not load reviews. Please refresh.</p>';
+      }
+    }
+
+    function renderReviewCard(r) {
+      const stars   = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+      const initials= r.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const date    = new Date(r.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+
+      // Normalize media: new `media` array, or fall back to legacy single mediaUrl fields
+      const mediaList = Array.isArray(r.media) && r.media.length
+        ? r.media
+        : (r.mediaUrl ? [{ url: r.mediaUrl, type: r.mediaType || 'image' }] : []);
+
+      let mediaHtml = '';
+      if (mediaList.length) {
+        const MAX_PREVIEW = 4;
+        const shown = mediaList.slice(0, MAX_PREVIEW);
+        const extra = mediaList.length - MAX_PREVIEW;
+        const sizeClass = mediaList.length === 1 ? 'rc-media-1'
+          : mediaList.length === 2 ? 'rc-media-2'
+          : mediaList.length === 3 ? 'rc-media-3'
+          : 'rc-media-4-plus';
+
+        mediaHtml = `<div class="rc-media ${sizeClass}" data-review-id="${escapeHtml(r.id)}">` +
+          shown.map((m, idx) => {
+            const isLast = idx === shown.length - 1 && extra > 0;
+            if (m.type === 'video') {
+              return `
+                <div class="rc-media-item" onclick="openReviewLightbox('${escapeHtml(r.id)}', ${idx})">
+                  <video src="${escapeHtml(m.url)}" muted loop playsinline preload="metadata"></video>
+                  <button class="rc-mute-btn" type="button" onclick="event.stopPropagation(); toggleReviewMute(this)">${muteIconSvg(true)}</button>
+                  ${isLast ? `<div class="rc-media-more">+${extra}</div>` : ''}
+                </div>`;
+            }
+            return `
+              <div class="rc-media-item" onclick="openReviewLightbox('${escapeHtml(r.id)}', ${idx})">
+                <img src="${escapeHtml(m.url)}" alt="Review photo" loading="lazy">
+                ${isLast ? `<div class="rc-media-more">+${extra}</div>` : ''}
+              </div>`;
+          }).join('') +
+        `</div>`;
+      }
+
+      return `
+        <div class="review-card" data-review-id="${r.id}" data-media='${escapeHtml(JSON.stringify(mediaList))}'>
+          <div class="rc-stars">${stars}</div>
+          ${mediaHtml}
+          <p class="rc-text">"${escapeHtml(r.text)}"</p>
+          <div class="rc-author">
+            <div class="rc-av">${initials}</div>
+            <div>
+              <div class="rc-name">${escapeHtml(r.name)}</div>
+              <div class="rc-date">${date}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ── Professional speaker (mute/unmute) SVG icons ── */
+    function muteIconSvg(isMuted) {
+      return isMuted
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+    }
+
+    function toggleReviewMute(btn) {
+      const video = btn.previousElementSibling;
+      if (!video || video.tagName !== 'VIDEO') return;
+      video.muted = !video.muted;
+      btn.innerHTML = muteIconSvg(video.muted);
+    }
+
+    function prependReview(r) {
+      const grid = document.getElementById('reviewsGrid');
+      grid.style.display = 'grid';
+      document.getElementById('noReviews').style.display = 'none';
+      grid.insertAdjacentHTML('afterbegin', renderReviewCard(r));
+      // Update heading count
+      const current = parseInt(document.getElementById('reviewsHeading').textContent.match(/\d+/)?.[0] || 0);
+      document.getElementById('reviewsHeading').textContent = `All Reviews (${current + 1})`;
+    }
+
+    /* ── LIGHTBOX (supports multiple images/videos per review) ── */
+    let lightboxMedia = [];
+    let lightboxIndex = 0;
+
+    function openReviewLightbox(reviewId, startIndex) {
+      const card = document.querySelector(`.review-card[data-review-id="${reviewId}"]`);
+      if (!card) return;
+      try {
+        lightboxMedia = JSON.parse(card.dataset.media);
+      } catch {
+        lightboxMedia = [];
+      }
+      if (!lightboxMedia.length) return;
+
+      lightboxIndex = startIndex || 0;
+      renderLightboxMedia();
+
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderLightboxMedia() {
+      const content = document.getElementById('lightboxContent');
+      const m = lightboxMedia[lightboxIndex];
+      if (!m) return;
+
+      if (m.type === 'video') {
+        // No native `controls` — custom mute button only, so no browser UI
+        // (play/seek bar/fullscreen icon) ever appears over the video.
+        content.innerHTML = `
+          <video id="lbVideo" src="${escapeHtml(m.url)}" autoplay muted loop playsinline></video>
+          <button class="lb-mute-btn" type="button" onclick="toggleLightboxMute(this)">${muteIconSvg(true)}</button>
+        `;
+      } else {
+        content.innerHTML = `<img src="${escapeHtml(m.url)}" alt="Review media">`;
+      }
+
+      const prevBtn = document.getElementById('lightboxPrev');
+      const nextBtn = document.getElementById('lightboxNext');
+      const showNav = lightboxMedia.length > 1;
+      prevBtn.style.display = showNav ? 'flex' : 'none';
+      nextBtn.style.display = showNav ? 'flex' : 'none';
+    }
+
+    function changeLightboxMedia(direction) {
+      lightboxIndex += direction;
+      if (lightboxIndex >= lightboxMedia.length) lightboxIndex = 0;
+      if (lightboxIndex < 0) lightboxIndex = lightboxMedia.length - 1;
+      renderLightboxMedia();
+    }
+
+    function toggleLightboxMute(btn) {
+      const video = document.getElementById('lbVideo');
+      if (!video) return;
+      video.muted = !video.muted;
+      btn.innerHTML = muteIconSvg(video.muted);
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+      document.getElementById('lightboxContent').innerHTML = '';
+      lightboxMedia = [];
+    }
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') changeLightboxMedia(1);
+      if (e.key === 'ArrowLeft') changeLightboxMedia(-1);
+    });
+
+    /* ── HELPERS ── */
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg) {
+      let t = document.getElementById('pm-toast');
+      if (!t) { t = document.createElement('div'); t.id = 'pm-toast'; t.className = 'toast'; document.body.appendChild(t); }
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    /* ── NAVBAR / WA ── */
+    function initNavbar() {
+      const nav = document.getElementById('navbar');
+      if (!nav) return;
+      const update = () => nav.classList.toggle('scrolled', window.scrollY > 50);
+      window.addEventListener('scroll', update, { passive: true }); update();
+    }
+    function initHamburger() {
+      const btn = document.getElementById('hamburger');
+      const drawer = document.getElementById('drawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const closeBtn = document.getElementById('drawerClose');
+      if (!btn) return;
+      const open = () => { drawer.classList.add('open'); backdrop.classList.add('open'); btn.classList.add('open'); document.body.style.overflow = 'hidden'; };
+      const close = () => { drawer.classList.remove('open'); backdrop.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow = ''; };
+      btn.addEventListener('click', () => drawer.classList.contains('open') ? close() : open());
+      backdrop.addEventListener('click', close);
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      document.querySelectorAll('.dl').forEach(a => a.addEventListener('click', close));
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function initWALinks() {
+      const msg = encodeURIComponent(`Hello ${window.BRAND_NAME}!\n\nI'd like to enquire about your EV scooter spare parts.\nPlease help me get started!\n\n(Sent from ${window.BRAND_NAME})`);
+      const link = `https://wa.me/${window.EMI_WHATSAPP_NUMBER}?text=${msg}`;
+      ['floatWA','footerWA'].forEach(id => { const el = document.getElementById(id); if(el) el.href = link; });
+    }
+
+    /* ── THEME (LIGHT / DARK) — shared logic with script.js, duplicated
+       here since reviews.html doesn't load script.js separately. ── */
+    function initTheme() {
+      const stored = localStorage.getItem('emi_theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = stored || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeToggleIcon(theme);
+    }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('emi_theme', next);
+      updateThemeToggleIcon(next);
+    }
+    function updateThemeToggleIcon(theme) {
+      document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+        btn.innerHTML = theme === 'dark' ? sunIconSvgTheme() : moonIconSvgTheme();
+        btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      });
+    }
+    function sunIconSvgTheme() {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    }
+    function moonIconSvgTheme() {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    }
+  </script>
+</body>
+</html>

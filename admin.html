@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Electromotive Inventory</title>
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0ea86b">
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --bg:       #0a0a0a;
+      --surface:  #141414;
+      --surface2: #1c1c1c;
+      --border:   #2a2a2a;
+      --text:     #f0f0f0;
+      --muted:    #888;
+      --accent:   #0ea86b;
+      --accent2:  #0a7fd1;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #f5a623;
+      --font-display: 'Playfair Display', serif;
+      --font-body:    'DM Sans', sans-serif;
+      --sidebar-w:    260px;
+    }
+    /* ── LIGHT MODE (admin panel default is dark; light mode swaps to a
+       bright, professional palette while keeping every other rule
+       working unchanged, since all colors are var()-driven) ── */
+    [data-theme="light"] {
+      --bg:       #f5f4f0;
+      --surface:  #ffffff;
+      --surface2: #f0efe9;
+      --border:   #e0ded6;
+      --text:     #1a1a18;
+      --muted:    #706e68;
+    }
+    .theme-toggle-btn-admin {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text); width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .theme-toggle-btn-admin:hover { border-color: var(--accent); color: var(--accent); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ── LOGIN SCREEN ── */
+    .login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(255,77,46,.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 50%, rgba(255,77,46,.05) 0%, transparent 60%);
+    }
+    .login-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 380px;
+    }
+    .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    .login-logo-text { font-family: var(--font-display); font-size: 1.5rem; }
+    .login-logo-text em { color: var(--accent); font-style: normal; }
+    .login-tag { font-size: .78rem; color: var(--muted); background: var(--surface2); padding: 4px 10px; border-radius: 20px; }
+    .login-title { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: .5rem; }
+    .login-sub { color: var(--muted); font-size: .9rem; margin-bottom: 2rem; }
+
+    .adm-input {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; color: var(--text);
+      font-family: var(--font-body); font-size: .95rem; outline: none;
+      transition: border-color .2s; margin-bottom: 1rem;
+    }
+    .adm-input:focus { border-color: var(--accent); }
+
+    .login-btn {
+      width: 100%; padding: 14px; background: var(--accent); color: white;
+      border: none; border-radius: 12px; font-family: var(--font-body);
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s;
+    }
+    .login-btn:hover { opacity: .88; }
+    .login-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .login-error { color: var(--red); font-size: .88rem; margin-top: .5rem; min-height: 1.2em; }
+
+    /* ── ADMIN LAYOUT ── */
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-layout.hidden { display: none; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--surface);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+      transition: transform .3s;
+    }
+    .sidebar-header {
+      padding: 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo { font-family: var(--font-display); font-size: 1.3rem; }
+    .sidebar-logo em { color: var(--accent); font-style: normal; }
+    .sidebar-badge { font-size:.68rem; background:var(--accent); color:white; padding:2px 8px; border-radius:10px; }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 1.5rem; cursor: pointer; color: var(--muted);
+      font-size: .93rem; font-weight: 500; border-left: 3px solid transparent;
+      transition: all .15s; text-decoration: none; border: none; background: none;
+      width: 100%; font-family: var(--font-body);
+    }
+    .nav-item:hover { color: var(--text); background: var(--surface2); }
+    .nav-item.active { color: var(--accent); border-left: 3px solid var(--accent); background: rgba(255,77,46,.07); }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-count {
+      margin-left: auto; background: var(--accent); color: white;
+      font-size: .7rem; padding: 1px 7px; border-radius: 10px; font-weight: 700;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+    }
+    .logout-btn {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      background: none; border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; color: var(--muted); cursor: pointer;
+      font-family: var(--font-body); font-size: .88rem; transition: all .15s;
+    }
+    .logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* Main content */
+    .admin-main {
+      flex: 1; margin-left: var(--sidebar-w);
+      padding: 2rem; min-height: 100vh; overflow-y: auto;
+    }
+
+    /* Top bar */
+    .admin-topbar {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;
+    }
+    .sidebar-toggle-btn {
+      display: none; background: none; border: none; color: var(--text);
+      cursor: pointer; padding: 6px;
+    }
+    .admin-topbar h1 { font-family: var(--font-display); font-size: 1.8rem; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .topbar-time { font-size: .82rem; color: var(--muted); }
+
+    /* Sections */
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    /* Cards */
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.3rem;
+    }
+    .sc-label { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+    .sc-value { font-size: 2rem; font-weight: 700; font-family: var(--font-display); }
+    .sc-value.green { color: var(--green); }
+    .sc-value.accent { color: var(--accent); }
+    .sc-value.yellow { color: var(--yellow); }
+
+    /* ── PRODUCTS SECTION ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .section-title { font-family: var(--font-display); font-size: 1.5rem; }
+
+    .btn-primary-adm {
+      background: var(--accent); color: white; border: none; border-radius: 10px;
+      padding: 10px 20px; font-family: var(--font-body); font-size: .9rem;
+      font-weight: 600; cursor: pointer; transition: opacity .2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-primary-adm:hover { opacity: .88; }
+    .btn-secondary-adm {
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 18px; font-family: var(--font-body);
+      font-size: .9rem; cursor: pointer; transition: background .15s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-secondary-adm:hover { background: var(--border); }
+
+    /* Product form container */
+    .product-forms-wrap { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem; }
+    .product-form-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem; position: relative;
+    }
+    .pfb-num {
+      position: absolute; top: -12px; left: 1.5rem;
+      background: var(--accent); color: white; font-size: .75rem;
+      font-weight: 700; padding: 2px 10px; border-radius: 20px;
+    }
+    .pfb-remove {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; color: var(--red); cursor: pointer;
+      font-size: 1.3rem; line-height: 1;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+    .form-group label {
+      display: block; font-size: .82rem; color: var(--muted); margin-bottom: 5px; font-weight: 500;
+    }
+    .form-group { margin-bottom: 0; }
+
+    .adm-select {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 11px 14px; color: var(--text);
+      font-family: var(--font-body); font-size: .92rem; outline: none;
+      transition: border-color .2s; cursor: pointer;
+    }
+    .adm-select:focus { border-color: var(--accent); }
+    textarea.adm-input { resize: vertical; min-height: 70px; }
+
+    .size-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .size-chip {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 8px 16px; color: var(--text);
+      cursor: pointer; font-family: var(--font-body); font-size: .85rem;
+      font-weight: 600; transition: all .15s;
+    }
+    .size-chip:hover { border-color: var(--accent); }
+    .size-chip.active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+
+    /* Print Side chips — same visual language as size chips, kept as a
+       distinct class so the two feature sets can be styled independently
+       later if needed. */
+    .side-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .side-chip {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 8px 16px; color: var(--text);
+      cursor: pointer; font-family: var(--font-body); font-size: .85rem;
+      font-weight: 600; transition: all .15s;
+    }
+    .side-chip:hover { border-color: var(--accent); }
+    .side-chip.active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+
+    .img-upload-row { display: flex; gap: 10px; align-items: flex-end; }
+    .img-upload-row .adm-input { flex: 1; margin-bottom: 0; }
+    .img-upload-btn {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 11px 14px; color: var(--text);
+      cursor: pointer; white-space: nowrap; font-family: var(--font-body);
+      font-size: .88rem; transition: background .15s; flex-shrink: 0;
+    }
+    .img-upload-btn:hover { background: var(--border); }
+
+    .img-preview-thumb {
+      width: 56px; height: 56px; border-radius: 8px; object-fit: cover;
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+
+    .media-thumb-grid {
+      display: flex; flex-direction: column; gap: 8px; margin-top: 10px;
+    }
+    .media-thumb-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px 8px;
+    }
+    .media-thumb-item .media-thumb-url {
+      flex: 1; min-width: 0; font-size: .8rem; color: var(--text-muted, #888);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-family: monospace;
+    }
+    .media-thumb-item .media-thumb-preview-wrap {
+      position: relative; width: 48px; height: 48px; flex-shrink: 0;
+    }
+    .media-thumb-item .media-thumb-preview-wrap img,
+    .media-thumb-item .media-thumb-preview-wrap video {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+    }
+    .media-thumb-item .media-thumb-badge {
+      position: absolute; bottom: -3px; left: -3px;
+      background: rgba(0,0,0,.65); color: #fff; font-size: 8px;
+      padding: 1px 4px; border-radius: 4px; line-height: 1.3;
+    }
+    .media-thumb-item .media-thumb-remove {
+      width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+      background: #e53e3e; color: #fff; border: none;
+      font-size: 13px; line-height: 24px; text-align: center;
+      cursor: pointer; padding: 0;
+    }
+    .media-thumb-item .media-thumb-remove:hover { background: #c53030; }
+
+    .add-more-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 2px dashed var(--border);
+      border-radius: 14px; padding: 1rem 1.5rem; width: 100%;
+      color: var(--muted); cursor: pointer; font-family: var(--font-body);
+      font-size: .95rem; transition: all .15s; justify-content: center;
+    }
+    .add-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .save-products-btn {
+      background: var(--accent); color: white; border: none; border-radius: 12px;
+      padding: 14px 32px; font-family: var(--font-body); font-size: 1rem;
+      font-weight: 700; cursor: pointer; transition: opacity .2s; margin-top: .5rem;
+    }
+    .save-products-btn:hover { opacity: .88; }
+    .save-products-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Existing products table */
+    .products-table-wrap { overflow-x: auto; margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 10px 14px; font-size: .8rem;
+      color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      font-size: .88rem; vertical-align: middle;
+    }
+    tr:hover td { background: var(--surface2); }
+    .prod-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+
+    .badge-cat {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px; font-size: .75rem; color: var(--muted);
+    }
+    .badge-instock {
+      background: rgba(34,197,94,.1); color: #22c55e; border: 1px solid rgba(34,197,94,.25);
+      border-radius: 20px; padding: 3px 10px; font-size: .75rem; font-weight: 600;
+    }
+    .badge-oos {
+      background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.25);
+      border-radius: 20px; padding: 3px 10px; font-size: .75rem; font-weight: 600;
+    }
+
+    .action-btns { display: flex; gap: 8px; }
+    .btn-edit {
+      background: rgba(245,166,35,.1); color: var(--yellow); border: 1px solid rgba(245,166,35,.25);
+      border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: .8rem;
+      font-family: var(--font-body); transition: background .15s;
+    }
+    .btn-edit:hover { background: rgba(245,166,35,.2); }
+    .btn-del {
+      background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: .8rem;
+      font-family: var(--font-body); transition: background .15s;
+    }
+    .btn-del:hover { background: rgba(239,68,68,.2); }
+
+    /* ── ORDERS SECTION ── */
+    .order-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem;
+    }
+    .order-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem; }
+    .order-id { font-size: .75rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+    .order-date { font-size: .78rem; color: var(--muted); }
+    .order-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: .8rem; margin-bottom: 1rem; }
+    .oi-item label { font-size: .75rem; color: var(--muted); display: block; margin-bottom: 3px; }
+    .oi-item span { font-size: .9rem; font-weight: 500; }
+    .order-items-list { margin-bottom: 1rem; }
+    .order-item-row {
+      background: var(--surface2); border-radius: 8px; padding: 8px 12px;
+      margin-bottom: 6px; font-size: .85rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .order-total { font-weight: 700; color: var(--accent); font-size: 1.05rem; }
+
+    /* ── REVIEWS ADMIN ── */
+    .review-admin-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem;
+    }
+    .rac-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+    .rac-meta { flex: 1; }
+    .rac-stars { color: var(--yellow); font-size: 1.1rem; }
+    .rac-name { font-weight: 600; font-size: .95rem; }
+    .rac-date { font-size: .75rem; color: var(--muted); }
+    .rac-text { font-size: .9rem; color: var(--muted); margin-top: .5rem; line-height: 1.5; }
+    .rac-media { margin-top: .8rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 300px; }
+    .rac-media.rac-media-1 { grid-template-columns: 1fr; max-width: 160px; }
+    .rac-media img,
+    .rac-media video { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; display: block; }
+    .rac-media.rac-media-1 img,
+    .rac-media.rac-media-1 video { height: 160px; }
+
+    /* ── CATEGORIES SECTION ── */
+    .cat-add-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.3rem;
+    }
+    .cat-form-row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .cat-form-row .adm-input { flex: 1; min-width: 180px; }
+    .cat-form-hint { font-size: .78rem; color: var(--muted); margin: 0; }
+    .cat-list-item-wrap { margin-bottom: .2rem; }
+    .cat-list-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: .8rem 1rem; margin-bottom: .7rem;
+    }
+    .cat-list-img {
+      width: 44px; height: 44px; border-radius: 8px; object-fit: cover;
+      background: var(--surface); flex-shrink: 0;
+    }
+    .cat-list-info { flex: 1; min-width: 0; }
+    .cat-list-name { font-weight: 600; font-size: .92rem; }
+    .cat-list-count { font-size: .76rem; color: var(--muted); }
+    .cat-list-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .cat-edit-row {
+      display: none; gap: 8px; margin-top: .6rem; flex-wrap: wrap;
+    }
+    .cat-edit-row.open { display: flex; }
+    .cat-edit-row .adm-input { flex: 1; min-width: 140px; }
+
+    /* ── EDIT MODAL ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2rem; width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+      transform: translateY(20px); transition: transform .25s;
+    }
+    .modal-backdrop.open .modal-box { transform: translateY(0); }
+    .modal-title { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 1.5rem; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3); border-top-color: white;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .adm-toast {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); color: var(--text); padding: 12px 24px;
+      border-radius: 12px; font-size: .9rem; z-index: 9999;
+      opacity: 0; transition: all .3s; pointer-events: none;
+      border: 1px solid var(--border); max-width: 90vw; text-align: center;
+    }
+    .adm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .adm-toast.success { border-color: var(--green); color: var(--green); }
+    .adm-toast.error   { border-color: var(--red);   color: var(--red);   }
+
+    /* Empty states */
+    .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+    .empty-state .es-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* Upload progress */
+    .prog-bar-wrap { background: var(--border); border-radius: 8px; height: 5px; overflow: hidden; margin: 6px 0; }
+    .prog-bar { height: 100%; background: var(--accent); border-radius: 8px; transition: width .3s; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .admin-main { margin-left: 0; padding: 1.2rem; }
+      .sidebar-toggle-btn { display: block; }
+      .form-row { grid-template-columns: 1fr; }
+      .form-row.triple { grid-template-columns: 1fr; }
+    }
+    /* ── CUSTOM STYLED DROPDOWN (overrides native browser select UI) ── */
+.adm-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 40px 12px 14px;
+  font-size: .92rem;
+  font-family: inherit;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+  transition: border-color .15s ease;
+}
+.adm-select:hover  { border-color: var(--accent); }
+.adm-select:focus  { outline: none; border-color: var(--accent); }
+.adm-select:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Style the dropdown's option list itself (limited but real cross-browser support) */
+.adm-select option {
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px;
+}
+
+/* Firefox: removes the dotted focus ring so it doesn't clash with our border */
+.adm-select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--text);
+               }
+
+/* ── FULLY CUSTOM DROPDOWN (replaces native <select> popup, not just the
+   closed-state look) — wraps a real <select> (kept hidden, still holds the
+   value every save/load function already reads via .value) with a styled
+   button + options list built entirely in our own markup. ── */
+.cdd { position: relative; width: 100%; }
+.cdd select { display: none !important; }
+.cdd-trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg); color: var(--text);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px 14px;
+  font-size: .92rem; font-family: inherit;
+  cursor: pointer; user-select: none;
+  transition: border-color .15s ease;
+}
+.cdd-trigger:hover { border-color: var(--accent); }
+.cdd.open .cdd-trigger { border-color: var(--accent); }
+.cdd-trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cdd-trigger-arrow {
+  flex-shrink: 0; width: 18px; height: 18px;
+  transition: transform .15s ease;
+  stroke: var(--muted);
+}
+.cdd.open .cdd-trigger-arrow { transform: rotate(180deg); }
+.cdd.disabled .cdd-trigger { opacity: .5; cursor: not-allowed; }
+
+.cdd-panel {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  max-height: 260px; overflow-y: auto;
+  z-index: 80;
+  opacity: 0; transform: translateY(-6px) scale(.98);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  padding: 6px;
+}
+.cdd.open .cdd-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+.cdd-option {
+  padding: 10px 12px; border-radius: 8px;
+  font-size: .9rem; color: var(--text);
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .1s ease;
+}
+.cdd-option:hover, .cdd-option.hl { background: var(--surface2); }
+.cdd-option.selected { background: var(--accent); color: #fff; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="assets/logo.png" alt="Electromotive Inventory Admin Logo" width="40" height="40" style="border-radius:8px;">
+      <div>
+        <div class="login-logo-text">Electromotive <em>Inventory</em></div>
+      </div>
+      <span class="login-tag">Admin</span>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to manage your store.</div>
+    <input type="text" class="adm-input" id="loginUser" placeholder="Username" autocomplete="username"/>
+    <input type="password" class="adm-input" id="loginPass" placeholder="Password" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter') doLogin()"/>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     ADMIN LAYOUT
+════════════════════════════════════ -->
+<div class="admin-layout hidden" id="adminLayout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div>
+        <div class="sidebar-logo">Electromotive <em>Inventory</em></div>
+      </div>
+      <span class="sidebar-badge">Admin</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="switchSection('products')" id="nav-products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Products
+        <span class="nav-count" id="nc-products">0</span>
+      </button>
+      <button class="nav-item" onclick="switchSection('orders')" id="nav-orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Order History
+        <span class="nav-count" id="nc-orders">0</span>
+      </button>
+      <button class="nav-item" onclick="switchSection('reviews')" id="nav-reviews">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Reviews
+        <span class="nav-count" id="nc-reviews">0</span>
+      </button>
+      <button class="nav-item" onclick="switchSection('categories')" id="nav-categories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Categories
+        <span class="nav-count" id="nc-categories">0</span>
+      </button>
+      <button class="nav-item" onclick="switchSection('models')" id="nav-models">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6a1 1 0 0 0-1-1h-4"/><path d="M5.5 17.5H15v-6h5.5"/><path d="M15 6l3.5 6"/></svg>
+        Models
+        <span class="nav-count" id="nc-models">0</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Backdrop for mobile sidebar -->
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none;" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+
+    <!-- Topbar -->
+    <div class="admin-topbar">
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <h1 id="sectionTitle">Products</h1>
+      <div class="topbar-right">
+        <span class="topbar-time" id="topbarTime"></span>
+        <button class="theme-toggle-btn-admin" onclick="toggleAdminTheme()" title="Switch theme" aria-label="Switch theme" id="adminThemeToggleBtn"></button>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTS SECTION ── -->
+    <div class="admin-section active" id="section-products">
+
+      <!-- Stats -->
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="sc-label">Total Products</div>
+          <div class="sc-value accent" id="totalProducts">0</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="switchSection('orders')">
+          <div class="sc-label">Total Orders</div>
+          <div class="sc-value green" id="totalOrders">0</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="switchSection('reviews')">
+          <div class="sc-label">Total Reviews</div>
+          <div class="sc-value yellow" id="totalReviews">0</div>
+        </div>
+      </div>
+
+      <!-- Add New Products -->
+      <div class="section-header">
+        <div class="section-title">Add New Products</div>
+      </div>
+
+      <div class="product-forms-wrap" id="productFormsWrap">
+        <!-- Forms injected here -->
+      </div>
+
+      <button class="add-more-btn" onclick="addProductForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+        Add More Products
+      </button>
+
+      <div style="margin-top:1.5rem;">
+        <button class="save-products-btn" id="saveProductsBtn" onclick="saveAllProducts()">
+          Save Products
+        </button>
+      </div>
+
+      <!-- Bulk Add Model -->
+      <div style="margin-top:3rem;">
+        <div class="section-header">
+          <div class="section-title">Bulk Add Model</div>
+        </div>
+        <div class="product-form-block">
+          <p style="color:var(--muted); font-size:.85rem; margin-bottom:1rem;">
+            Apply the same set of compatible EV scooter models to every product in a category (or all products)
+            at once — replaces each matching product's existing models with this set. Manage the master model
+            list itself on the <strong>Models</strong> tab.
+          </p>
+          <div class="form-group">
+            <label>Models to apply</label>
+            <div class="size-chip-row" id="bulk-models"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Apply to category</label>
+              <select class="adm-select" id="bulkCategorySelect">
+                <option value="all">All Products</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+              <button class="btn-primary-adm" id="bulkApplyBtn" onclick="bulkApplyModels()" style="width:100%;">Apply Models</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Existing Products -->
+      <div style="margin-top:3rem;">
+        <div class="section-header">
+          <div class="section-title">Existing Products</div>
+          <button class="btn-secondary-adm" onclick="loadProducts()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="products-table-wrap">
+          <table id="productsTable">
+            <thead>
+              <tr>
+                <th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Models</th><th>Stock</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ORDERS SECTION ── -->
+    <div class="admin-section" id="section-orders">
+      <div class="section-header">
+        <div class="section-title">Order History</div>
+        <button class="btn-secondary-adm" onclick="loadOrders()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="ordersContainer">
+        <div class="empty-state"><div class="es-icon">📦</div><p>Loading orders...</p></div>
+      </div>
+    </div>
+
+    <!-- ── REVIEWS SECTION ── -->
+    <div class="admin-section" id="section-reviews">
+      <div class="section-header">
+        <div class="section-title">Customer Reviews</div>
+        <button class="btn-secondary-adm" onclick="loadReviews()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="reviewsContainer">
+        <div class="empty-state"><div class="es-icon">💬</div><p>Loading reviews...</p></div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES SECTION ── -->
+    <div class="admin-section" id="section-categories">
+      <div class="section-header">
+        <div class="section-title">Manage Categories</div>
+        <button class="btn-secondary-adm" onclick="loadCategories()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Add New Category -->
+      <div class="cat-add-block">
+        <div class="section-title" style="margin-bottom:12px;">Add New Category</div>
+        <div class="cat-form-row">
+          <input type="text" id="newCatLabel" class="adm-input" placeholder="Category name (e.g. Keychains)"/>
+          <input type="text" id="newCatImage" class="adm-input" placeholder="Image URL (optional)"/>
+          <button class="save-products-btn" onclick="createCategory()" id="createCatBtn" style="width:auto; padding:0 20px;">+ Add Category</button>
+        </div>
+        <p class="cat-form-hint">This category will immediately appear on the website's product filter and in the product add/edit form.</p>
+      </div>
+
+      <!-- Existing Categories -->
+      <div class="cat-add-block" style="margin-top:20px;">
+        <div class="section-title" style="margin-bottom:12px;">Existing Categories</div>
+        <div id="categoriesContainer">
+          <div class="empty-state"><div class="es-icon">🏷️</div><p>Loading categories...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODELS SECTION ── -->
+    <div class="admin-section" id="section-models">
+      <div class="section-header">
+        <div class="section-title">Manage Compatible Models</div>
+        <button class="btn-secondary-adm" onclick="loadModels()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Add New Model -->
+      <div class="cat-add-block">
+        <div class="section-title" style="margin-bottom:12px;">Add New Model</div>
+        <div class="cat-form-row">
+          <input type="text" id="newModelName" class="adm-input" placeholder="Model name (e.g. Ola S1 Pro, Ola Roadster X)"/>
+          <button class="save-products-btn" onclick="createModel()" id="createModelBtn" style="width:auto; padding:0 20px;">+ Add Model</button>
+        </div>
+        <p class="cat-form-hint">This model immediately becomes available for customers to select on the product page and for you to assign to products below.</p>
+      </div>
+
+      <!-- Existing Models -->
+      <div class="cat-add-block" style="margin-top:20px;">
+        <div class="section-title" style="margin-bottom:12px;">Existing Models</div>
+        <div id="modelsContainer">
+          <div class="empty-state"><div class="es-icon">🛵</div><p>Loading models...</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── EDIT PRODUCT MODAL ── -->
+<div class="modal-backdrop" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title">Edit Product</div>
+    <input type="hidden" id="editProductId"/>
+    <div class="form-row">
+      <div class="form-group"><label>Product Name *</label><input type="text" class="adm-input" id="editName" placeholder="Product name"/></div>
+      <div class="form-group"><label>Price *</label><input type="text" class="adm-input" id="editPrice" placeholder="Rs.299"/></div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group"><label>Description</label><textarea class="adm-input" id="editDesc" placeholder="Product description..." rows="3"></textarea></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select class="adm-select" id="editCategory">
+          <!-- Populated dynamically from /api/categories -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Badge (optional)</label>
+        <input type="text" class="adm-input" id="editBadge" placeholder="POPULAR / NEW / etc"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Availability</label>
+        <select class="adm-select" id="editStock">
+          <option value="true">In Stock</option>
+          <option value="false">Out of Stock</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Compatible Models (optional — leave empty for products that fit every model)</label>
+      <div class="size-chip-row" id="edit-models"></div>
+      <p class="cat-form-hint" style="margin-top:6px;">Manage the master model list on the <strong>Models</strong> tab.</p>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Images / Videos</label>
+      <div class="img-upload-row">
+        <input type="text" class="adm-input" id="editImageUrl" placeholder="Paste image/video URL here"/>
+        <button type="button" class="img-upload-btn" onclick="addMediaFromUrlInput('edit', 'editImageUrl', 'edit-media-grid')">Add URL</button>
+        <label class="img-upload-btn">
+          Upload
+          <input type="file" id="editImageFile" accept="image/*,video/mp4,video/webm" multiple style="display:none" onchange="handleEditImageUpload(this)"/>
+        </label>
+      </div>
+      <div class="prog-bar-wrap" id="editUploadProg" style="display:none"><div class="prog-bar" id="editUploadBar"></div></div>
+      <div class="media-thumb-grid" id="edit-media-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary-adm" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary-adm" id="saveEditBtn" onclick="saveEditProduct()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="adm-toast" id="admToast"></div>
+
+<!-- CUSTOM DELETE CONFIRM MODAL -->
+<div class="del-modal-backdrop" id="delModal">
+  <div class="del-modal-box">
+    <div class="del-modal-icon" id="delModalIcon">🗑️</div>
+    <div class="del-modal-title" id="delModalTitle">Delete Item?</div>
+    <div class="del-modal-msg" id="delModalMsg">This action cannot be undone.</div>
+    <div class="del-modal-btns">
+      <button class="del-btn-cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="del-btn-confirm" id="delBtnConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.del-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 600; opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.del-modal-backdrop.open { opacity: 1; pointer-events: all; }
+.del-modal-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2rem 1.8rem;
+  width: 100%; max-width: 340px; text-align: center;
+  transform: scale(.92); transition: transform .2s;
+}
+.del-modal-backdrop.open .del-modal-box { transform: scale(1); }
+.del-modal-icon { font-size: 2.5rem; margin-bottom: .8rem; }
+.del-modal-title {
+  font-family: var(--font-display); font-size: 1.3rem;
+  margin-bottom: .5rem; color: var(--text);
+}
+.del-modal-msg {
+  font-size: .9rem; color: var(--muted); margin-bottom: 1.8rem; line-height: 1.5;
+}
+.del-modal-btns { display: flex; gap: 10px; }
+.del-btn-cancel {
+  flex: 1; padding: 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); font-family: var(--font-body);
+  font-size: .95rem; cursor: pointer; transition: background .15s;
+}
+.del-btn-cancel:hover { background: var(--border); }
+.del-btn-confirm {
+  flex: 1; padding: 12px; background: var(--red);
+  border: none; border-radius: 12px;
+  color: white; font-family: var(--font-body);
+  font-size: .95rem; font-weight: 700; cursor: pointer;
+  transition: opacity .15s;
+}
+.del-btn-confirm:hover { opacity: .85; }
+</style>
+
+<!-- ADMIN MEDIA LIGHTBOX (full-size image/video preview, same behavior as the main site) -->
+<div class="am-lightbox" id="amLightbox" onclick="if(event.target===this) closeAdminLightbox()">
+  <button class="am-lb-close" type="button" onclick="closeAdminLightbox()">✕</button>
+  <button class="am-lb-nav am-lb-prev" id="amLbPrev" type="button" onclick="changeAdminLightbox(-1)" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <div class="am-lb-content" id="amLbContent"></div>
+  <button class="am-lb-nav am-lb-next" id="amLbNext" type="button" onclick="changeAdminLightbox(1)" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+</div>
+
+<style>
+.am-lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,.92);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999; opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.am-lightbox.open { opacity: 1; pointer-events: all; }
+.am-lb-content { position: relative; max-width: 92vw; max-height: 92vh; display: flex; align-items: center; justify-content: center; }
+.am-lb-content img,
+.am-lb-content video { max-width: 92vw; max-height: 92vh; border-radius: 12px; object-fit: contain; display: block; }
+.am-lb-close {
+  position: absolute; top: 20px; right: 24px;
+  width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  background: #000; border: none; color: #fff;
+  font-size: 1.3rem; cursor: pointer; line-height: 1; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+}
+.am-lb-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; padding: 0; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35); background: rgba(0,0,0,.7); color: #fff;
+  line-height: 1; cursor: pointer; z-index: 3; display: flex; align-items: center; justify-content: center;
+}
+@media (hover: hover) and (pointer: fine) {
+  .am-lb-nav:hover { background: var(--red); border-color: var(--red); }
+}
+.am-lb-nav:active { background: var(--red); border-color: var(--red); }
+.am-lb-prev { left: 16px; }
+.am-lb-next { right: 16px; }
+.am-lb-mute-btn {
+  position: absolute; bottom: 16px; right: 16px;
+  width: 38px; height: 38px; border: none; border-radius: 50%;
+  background: rgba(0,0,0,.7); color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0; z-index: 3;
+}
+.am-lb-mute-btn:hover { background: #000; }
+.am-lb-mute-btn svg { width: 18px; height: 18px; }
+/* Clickable cursor hint on any thumbnail wired to the admin lightbox */
+.prod-thumb, .media-thumb-preview-wrap img, .media-thumb-preview-wrap video,
+.rac-media img, .rac-media video { cursor: zoom-in; }
+</style>
+
+<script>
+/* ══════════════════════════════════════
+   ADMIN MEDIA LIGHTBOX
+   Reused for: product table thumbnails, add/edit media grids, review media.
+   ══════════════════════════════════════ */
+let amMediaList  = [];
+let amMediaIndex = 0;
+
+function muteIconSvgAdmin(isMuted) {
+  return isMuted
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+}
+
+// media: array of {url, type} — opens at startIndex
+function openAdminLightbox(media, startIndex) {
+  amMediaList  = Array.isArray(media) ? media.filter(m => m && m.url) : [];
+  amMediaIndex = startIndex || 0;
+  if (!amMediaList.length) return;
+
+  renderAdminLightbox();
+  document.getElementById('amLightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderAdminLightbox() {
+  const content = document.getElementById('amLbContent');
+  const m = amMediaList[amMediaIndex];
+  if (!m) return;
+
+  // No native `controls` — custom mute button only, so no browser UI
+  // (play/seek bar/fullscreen icon) ever appears over the video.
+  content.innerHTML = m.type === 'video'
+    ? `<video id="amLbVideo" src="${m.url}" autoplay muted loop playsinline></video>
+       <button class="am-lb-mute-btn" type="button" onclick="toggleAdminLightboxMute(this)">${muteIconSvgAdmin(true)}</button>`
+    : `<img src="${m.url}" alt="">`;
+
+  const showNav = amMediaList.length > 1;
+  document.getElementById('amLbPrev').style.display = showNav ? 'flex' : 'none';
+  document.getElementById('amLbNext').style.display = showNav ? 'flex' : 'none';
+}
+
+function changeAdminLightbox(direction) {
+  amMediaIndex += direction;
+  if (amMediaIndex >= amMediaList.length) amMediaIndex = 0;
+  if (amMediaIndex < 0) amMediaIndex = amMediaList.length - 1;
+  renderAdminLightbox();
+}
+
+function toggleAdminLightboxMute(btn) {
+  const video = document.getElementById('amLbVideo');
+  if (!video) return;
+  video.muted = !video.muted;
+  btn.innerHTML = muteIconSvgAdmin(video.muted);
+}
+
+function closeAdminLightbox() {
+  document.getElementById('amLightbox').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('amLbContent').innerHTML = '';
+  amMediaList = [];
+}
+
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('amLightbox');
+  if (!lb || !lb.classList.contains('open')) return;
+  if (e.key === 'Escape') closeAdminLightbox();
+  if (e.key === 'ArrowRight') changeAdminLightbox(1);
+  if (e.key === 'ArrowLeft') changeAdminLightbox(-1);
+});
+</script>
+
+<script>
+/* ══════════════════════════════════════
+   CUSTOM DROPDOWN ENGINE
+   Wraps every .adm-select <select> with a fully custom-rendered trigger +
+   options panel, so the popup list matches the site instead of the
+   browser's native dropdown. The original <select> stays in the DOM
+   (hidden) and keeps its .value in sync both ways — every existing
+   `document.getElementById(...).value` read/write in this file keeps
+   working untouched, including dynamic re-population (categories, etc).
+   ══════════════════════════════════════ */
+const CDD_ARROW = `<svg class="cdd-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+function cddBuild(select) {
+  if (!select || select.dataset.cddBound === '1') return;
+  select.dataset.cddBound = '1';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cdd';
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'cdd-trigger';
+  trigger.innerHTML = `<span class="cdd-trigger-label"></span>${CDD_ARROW}`;
+  wrap.appendChild(trigger);
+
+  const panel = document.createElement('div');
+  panel.className = 'cdd-panel';
+  wrap.appendChild(panel);
+
+  function sync() {
+    // Rebuild option list from the live <select> — safe to call anytime
+    // the underlying options change (e.g. categories reloaded).
+    const opts = Array.from(select.options);
+    panel.innerHTML = opts.map(o => `
+      <div class="cdd-option ${o.selected ? 'selected' : ''}" data-value="${o.value.replace(/"/g, '&quot;')}">${o.textContent}</div>
+    `).join('');
+    const current = opts.find(o => o.selected) || opts[0];
+    trigger.querySelector('.cdd-trigger-label').textContent = current ? current.textContent : '';
+    wrap.classList.toggle('disabled', select.disabled);
+  }
+
+  function open() {
+    if (select.disabled) return;
+    document.querySelectorAll('.cdd.open').forEach(o => { if (o !== wrap) o.classList.remove('open'); });
+    sync();
+    wrap.classList.add('open');
+  }
+  function close() { wrap.classList.remove('open'); }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    wrap.classList.contains('open') ? close() : open();
+  });
+
+  panel.addEventListener('click', (e) => {
+    const opt = e.target.closest('.cdd-option');
+    if (!opt) return;
+    select.value = opt.dataset.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    sync();
+    close();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) close();
+  });
+
+  // Expose so dynamic re-population (categories etc.) can force a re-sync
+  select._cddSync = sync;
+  sync();
+}
+
+// Scans the page for any .adm-select not yet wrapped and wires it up.
+// Call this after rendering any new <select> (product forms, edit modal, ...).
+function cddRefresh() {
+  document.querySelectorAll('select.adm-select').forEach(cddBuild);
+}
+
+// Call after a <select>'s innerHTML/options were changed programmatically
+// so its custom dropdown panel + label reflect the new options/value.
+function cddSync(select) {
+  if (select && select._cddSync) select._cddSync();
+}
+</script>
+
+<script>
+const API = window.EMI_API_URL;
+let token = '';
+
+/* ══════════════════════════════
+   THEME (LIGHT / DARK)
+══════════════════════════════ */
+function initAdminTheme() {
+  const stored = localStorage.getItem('emi_admin_theme');
+  document.documentElement.setAttribute('data-theme', stored || 'dark');
+  updateAdminThemeIcon(stored || 'dark');
+}
+function toggleAdminTheme() {
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('emi_admin_theme', next);
+  updateAdminThemeIcon(next);
+}
+function updateAdminThemeIcon(theme) {
+  const btn = document.getElementById('adminThemeToggleBtn');
+  if (!btn) return;
+  btn.innerHTML = theme === 'light'
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+  btn.title = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
+}
+
+/* ══════════════════════════════
+   AUTH
+══════════════════════════════ */
+function checkAuth() {
+  const stored = localStorage.getItem('emi_admin_token');
+  const exp    = localStorage.getItem('emi_admin_exp');
+  if (stored && exp && Date.now() < parseInt(exp)) {
+    token = stored;
+    showAdmin();
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('loginError');
+
+  if (!username || !password) { errEl.textContent = 'Please fill in both fields.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  errEl.textContent = '';
+
+  try {
+    const res  = await apiFetch('/api/auth/login', 'POST', { username, password }, false);
+    if (res.token) {
+      token = res.token;
+      localStorage.setItem('emi_admin_token', token);
+      localStorage.setItem('emi_admin_exp', Date.now() + 7 * 24 * 60 * 60 * 1000);
+      showAdmin();
+    } else {
+      errEl.textContent = res.error || 'Login failed.';
+    }
+  } catch {
+    errEl.textContent = 'Network error. Check Worker URL.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+}
+
+function doLogout() {
+  token = '';
+  localStorage.removeItem('emi_admin_token');
+  localStorage.removeItem('emi_admin_exp');
+  document.getElementById('adminLayout').classList.add('hidden');
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminLayout').classList.remove('hidden');
+  initAdmin();
+}
+
+/* ══════════════════════════════
+   INIT
+══════════════════════════════ */
+function initAdmin() {
+  initAdminTheme();
+  updateTime();
+  setInterval(updateTime, 60000);
+  loadCategories().then(() => addProductForm()); // load categories first so the form dropdown has options
+  loadModels();
+  loadProducts();
+  loadOrders();
+  loadReviews();
+  cddRefresh(); // wrap editCategory / editStock and any other static selects
+}
+
+function updateTime() {
+  document.getElementById('topbarTime').textContent =
+    new Date().toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+/* ══════════════════════════════
+   NAVIGATION
+══════════════════════════════ */
+function switchSection(name) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`section-${name}`).classList.add('active');
+  document.getElementById(`nav-${name}`).classList.add('active');
+  document.getElementById('sectionTitle').textContent =
+    { products: 'Products', orders: 'Order History', reviews: 'Reviews', categories: 'Categories', models: 'Models' }[name];
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  sb.classList.toggle('open');
+  bd.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').style.display = 'none';
+}
+
+/* ══════════════════════════════
+   API HELPER
+══════════════════════════════ */
+async function apiFetch(path, method = 'GET', body = null, auth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth) headers['Authorization'] = `Bearer ${token}`;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res  = await fetch(API + path, opts);
+  return res.json();
+}
+
+/* ══════════════════════════════
+   CATEGORIES
+══════════════════════════════ */
+let allCategories = [];
+
+async function loadCategories() {
+  try {
+    const res = await fetch(`${API}/api/categories`);
+    const data = await res.json();
+    allCategories = Array.isArray(data) ? data : [];
+  } catch (e) {
+    allCategories = [];
+  }
+  renderCategoriesList();
+  refreshAllCategorySelects();
+  const nc = document.getElementById('nc-categories');
+  if (nc) nc.textContent = allCategories.length;
+}
+
+// Shared <option> markup used by both the add-product form and edit modal
+function categoryOptionsHtml(selected) {
+  if (!allCategories.length) {
+    return `<option value="">No categories yet — add one first</option>`;
+  }
+  return allCategories.map(c =>
+    `<option value="${escHtml(c.id)}" ${c.id === selected ? 'selected' : ''}>${escHtml(c.label)}</option>`
+  ).join('');
+}
+
+// Re-populates every category <select> currently on the page (add-product
+// forms + the edit modal) without wiping whatever the user had selected.
+function refreshAllCategorySelects() {
+  document.querySelectorAll('select[id^="pf-cat-"]').forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = categoryOptionsHtml(current);
+    if (current && allCategories.some(c => c.id === current)) sel.value = current;
+    cddSync(sel);
+  });
+
+  const bulkSel = document.getElementById('bulkCategorySelect');
+  if (bulkSel) {
+    const current = bulkSel.value || 'all';
+    bulkSel.innerHTML = `<option value="all">All Products</option>` + categoryOptionsHtml(current === 'all' ? null : current);
+    bulkSel.value = current;
+    cddSync(bulkSel);
+  }
+  const editSel = document.getElementById('editCategory');
+  if (editSel) {
+    const current = editSel.value;
+    editSel.innerHTML = categoryOptionsHtml(current);
+    if (current && allCategories.some(c => c.id === current)) editSel.value = current;
+    cddSync(editSel);
+  }
+}
+
+function renderCategoriesList() {
+  const cont = document.getElementById('categoriesContainer');
+  if (!cont) return;
+
+  if (!allCategories.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="es-icon">🏷️</div><p>No categories yet. Add one above.</p></div>`;
+    return;
+  }
+
+  const counts = {};
+  allProducts.forEach(p => { counts[p.category] = (counts[p.category] || 0) + 1; });
+
+  cont.innerHTML = allCategories.map(c => {
+    const count = counts[c.id] || 0;
+    return `
+      <div class="cat-list-item-wrap" data-cat-id="${escHtml(c.id)}">
+        <div class="cat-list-item">
+          <img class="cat-list-img" src="${c.image ? escHtml(c.image) : 'https://via.placeholder.com/44'}" onerror="this.src='https://via.placeholder.com/44'">
+          <div class="cat-list-info">
+            <div class="cat-list-name">${escHtml(c.label)}</div>
+            <div class="cat-list-count">${count} product${count === 1 ? '' : 's'}</div>
+          </div>
+          <div class="cat-list-actions">
+            <button class="btn-edit" onclick="toggleCategoryEditRow('${escHtml(c.id)}')">Edit</button>
+            <button class="btn-del" data-cat-id="${escHtml(c.id)}" data-cat-label="${escHtml(c.label)}" data-cat-count="${count}" onclick="deleteCategoryUI(this.dataset.catId, this.dataset.catLabel, Number(this.dataset.catCount))">Delete</button>
+          </div>
+        </div>
+        <div class="cat-edit-row" id="cat-edit-row-${escHtml(c.id)}">
+          <input type="text" class="adm-input" id="cat-edit-label-${escHtml(c.id)}" value="${escHtml(c.label)}" placeholder="Category name"/>
+          <input type="text" class="adm-input" id="cat-edit-image-${escHtml(c.id)}" value="${c.image ? escHtml(c.image) : ''}" placeholder="Image URL (optional)"/>
+          <button class="btn-edit" onclick="saveCategoryEdit('${escHtml(c.id)}')">Save</button>
+          <button class="btn-del" onclick="toggleCategoryEditRow('${escHtml(c.id)}')">Cancel</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleCategoryEditRow(id) {
+  const row = document.getElementById(`cat-edit-row-${id}`);
+  if (row) row.classList.toggle('open');
+}
+
+async function createCategory() {
+  const labelInput = document.getElementById('newCatLabel');
+  const imageInput = document.getElementById('newCatImage');
+  const btn = document.getElementById('createCatBtn');
+  const label = labelInput.value.trim();
+  const image = imageInput.value.trim();
+
+  if (!label) { showAdmToast('Enter a category name', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding...';
+  try {
+    const res = await apiFetch('/api/admin/categories', 'POST', { label, image });
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Category added!', 'success');
+      labelInput.value = '';
+      imageInput.value = '';
+      await loadCategories();
+    }
+  } catch (e) {
+    showAdmToast('Failed to add category', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = '+ Add Category';
+}
+
+async function saveCategoryEdit(id) {
+  const label = document.getElementById(`cat-edit-label-${id}`).value.trim();
+  const image = document.getElementById(`cat-edit-image-${id}`).value.trim();
+  if (!label) { showAdmToast('Category name cannot be empty', 'error'); return; }
+
+  try {
+    const res = await apiFetch(`/api/admin/categories/${encodeURIComponent(id)}`, 'PUT', { label, image });
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Category updated!', 'success');
+      await loadCategories();
+    }
+  } catch (e) {
+    showAdmToast('Failed to update category', 'error');
+  }
+}
+
+async function deleteCategoryUI(id, label, count) {
+  if (count > 0) {
+    showAdmToast(`Can't delete "${label}" — ${count} product(s) still use it. Move or delete them first.`, 'error');
+    return;
+  }
+  showDelModal(`Delete category "${label}"?`, 'This cannot be undone.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/categories/${encodeURIComponent(id)}`, 'DELETE');
+      if (res.error) {
+        showAdmToast(res.error, 'error');
+      } else {
+        showAdmToast('✓ Category deleted', 'success');
+        await loadCategories();
+      }
+    } catch (e) {
+      showAdmToast('Failed to delete category', 'error');
+    }
+  });
+}
+
+/* ══════════════════════════════
+   PRODUCTS
+══════════════════════════════ */
+let productForms = [];
+
+function addProductForm() {
+  const idx = productForms.length;
+  productForms.push({ id: idx });
+  renderProductForms();
+}
+
+function removeProductForm(idx) {
+  productForms.splice(idx, 1);
+
+  // Re-index mediaStore 'add:N' keys to match the new form order
+  const oldMedia = {};
+  Object.keys(mediaStore).forEach(k => {
+    if (k.startsWith('add:')) { oldMedia[k] = mediaStore[k]; delete mediaStore[k]; }
+  });
+  productForms.forEach((_, newIdx) => {
+    const oldIdx = newIdx >= idx ? newIdx + 1 : newIdx;
+    if (oldMedia[`add:${oldIdx}`]) mediaStore[`add:${newIdx}`] = oldMedia[`add:${oldIdx}`];
+  });
+
+  // Re-index modelSelStore 'add:N' keys the same way
+  const oldModelSel = {};
+  Object.keys(modelSelStore).forEach(k => {
+    if (k.startsWith('add:')) { oldModelSel[k] = modelSelStore[k]; delete modelSelStore[k]; }
+  });
+  productForms.forEach((_, newIdx) => {
+    const oldIdx = newIdx >= idx ? newIdx + 1 : newIdx;
+    if (oldModelSel[`add:${oldIdx}`]) modelSelStore[`add:${newIdx}`] = oldModelSel[`add:${oldIdx}`];
+  });
+
+  renderProductForms();
+}
+
+function renderProductForms() {
+  const wrap = document.getElementById('productFormsWrap');
+  wrap.innerHTML = productForms.map((_, i) => `
+    <div class="product-form-block" id="pfb-${i}">
+      <span class="pfb-num">Product ${i + 1}</span>
+      ${productForms.length > 1 ? `<button class="pfb-remove" onclick="removeProductForm(${i})">✕</button>` : ''}
+
+      <div class="form-row" style="margin-top:.5rem;">
+        <div class="form-group"><label>Product Name *</label>
+          <input type="text" class="adm-input" id="pf-name-${i}" placeholder="e.g. Custom Ceramic Mug"/>
+        </div>
+        <div class="form-group"><label>Price *</label>
+          <input type="text" class="adm-input" id="pf-price-${i}" placeholder="Rs.249"/>
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group"><label>Description</label>
+          <textarea class="adm-input" id="pf-desc-${i}" placeholder="Product description..." rows="2"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Category</label>
+          <select class="adm-select" id="pf-cat-${i}">
+            ${categoryOptionsHtml()}
+          </select>
+        </div>
+        <div class="form-group"><label>Badge (optional)</label>
+          <input type="text" class="adm-input" id="pf-badge-${i}" placeholder="POPULAR / NEW / BESTSELLER"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Availability</label>
+          <select class="adm-select" id="pf-stock-${i}">
+            <option value="true">In Stock</option>
+            <option value="false">Out of Stock</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Compatible Models (optional — leave empty for products that fit every model)</label>
+        <div class="size-chip-row" id="pf-models-${i}"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Images / Videos</label>
+        <div class="img-upload-row">
+          <input type="text" class="adm-input" id="pf-imgurl-${i}" placeholder="Paste image/video URL here"/>
+          <button type="button" class="img-upload-btn" onclick="addMediaFromUrlInput('add:${i}', 'pf-imgurl-${i}', 'pf-media-grid-${i}')">Add URL</button>
+          <label class="img-upload-btn">
+            Upload
+            <input type="file" id="pf-imgfile-${i}" accept="image/*,video/mp4,video/webm" multiple style="display:none" onchange="handleNewImgUpload(${i}, this)"/>
+          </label>
+        </div>
+        <div class="prog-bar-wrap" id="pf-prog-${i}" style="display:none"><div class="prog-bar" id="pf-bar-${i}"></div></div>
+        <div class="media-thumb-grid" id="pf-media-grid-${i}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Render any media/sizes/sides that already exist for these forms (e.g. after removing a different form)
+  productForms.forEach((_, i) => {
+    renderMediaGridGeneric(`pf-media-grid-${i}`, `add:${i}`, null);
+    renderModelChips(`pf-models-${i}`, `add:${i}`);
+  });
+  cddRefresh();
+}
+
+/* ══════════════════════════════
+   MODELS (compatible EV scooter models)
+   The master list lives on the backend (GET /api/models,
+   POST/PUT/DELETE /api/admin/models). Chip selections for a given
+   product form/edit-modal/bulk-apply context are tracked locally in
+   modelSelStore until the product itself is saved.
+══════════════════════════════ */
+let allModels = []; // [{id, name}] — master list from the backend
+const modelSelStore = {}; // key: 'add:0', 'edit', 'bulk' → array of selected model ids
+
+async function loadModels() {
+  try {
+    const res = await fetch(`${API}/api/models`);
+    const data = await res.json();
+    allModels = Array.isArray(data) ? data : [];
+  } catch (e) {
+    allModels = [];
+  }
+  renderModelsList();
+  refreshAllModelChipRows();
+  const nc = document.getElementById('nc-models');
+  if (nc) nc.textContent = allModels.length;
+}
+
+function modelName(id) {
+  const found = allModels.find(m => m.id === id);
+  return found ? found.name : id;
+}
+
+function getSelectedModels(key) {
+  return modelSelStore[key] || [];
+}
+function setSelectedModels(key, models) {
+  modelSelStore[key] = models;
+}
+
+/* Renders every model chip row currently on the page (add-product forms,
+   edit modal, bulk-apply) from the live allModels master list, keeping
+   each row's own selection intact. Call after loadModels() and after
+   any add/edit/delete of a model. */
+function refreshAllModelChipRows() {
+  document.querySelectorAll('[id^="pf-models-"]').forEach(wrap => {
+    const key = `add:${wrap.id.replace('pf-models-', '')}`;
+    renderModelChips(wrap.id, key);
+  });
+  if (document.getElementById('edit-models')) renderModelChips('edit-models', 'edit');
+  if (document.getElementById('bulk-models')) renderModelChips('bulk-models', 'bulk');
+}
+
+function renderModelChips(containerId, key) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const selected = getSelectedModels(key);
+
+  if (!allModels.length) {
+    wrap.innerHTML = `<span style="color:var(--muted);font-size:.85rem;">No models yet — add one on the Models tab first.</span>`;
+    return;
+  }
+
+  wrap.innerHTML = allModels.map(m => `
+    <button type="button" class="size-chip ${selected.includes(m.id) ? 'active' : ''}"
+      onclick="toggleModelSel('${key}', '${m.id.replace(/'/g, "\\'")}', '${containerId}')">${escHtml(m.name)}</button>
+  `).join('');
+}
+
+function toggleModelSel(key, modelId, containerId) {
+  let models = getSelectedModels(key);
+  models = models.includes(modelId) ? models.filter(m => m !== modelId) : [...models, modelId];
+  setSelectedModels(key, models);
+  renderModelChips(containerId, key);
+}
+
+function renderModelsList() {
+  const cont = document.getElementById('modelsContainer');
+  if (!cont) return;
+
+  if (!allModels.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="es-icon">🛵</div><p>No models yet. Add one above.</p></div>`;
+    return;
+  }
+
+  const counts = {};
+  (allProducts || []).forEach(p => {
+    (p.models || []).forEach(mid => { counts[mid] = (counts[mid] || 0) + 1; });
+  });
+
+  cont.innerHTML = allModels.map(m => {
+    const count = counts[m.id] || 0;
+    return `
+      <div class="cat-list-item-wrap" data-model-id="${escHtml(m.id)}">
+        <div class="cat-list-item">
+          <div class="cat-list-info">
+            <div class="cat-list-name">${escHtml(m.name)}</div>
+            <div class="cat-list-count">${count} product${count === 1 ? '' : 's'}</div>
+          </div>
+          <div class="cat-list-actions">
+            <button class="btn-edit" onclick="toggleModelEditRow('${escHtml(m.id)}')">Edit</button>
+            <button class="btn-del" data-model-id="${escHtml(m.id)}" data-model-name="${escHtml(m.name)}" onclick="deleteModelUI(this.dataset.modelId, this.dataset.modelName)">Delete</button>
+          </div>
+        </div>
+        <div class="cat-edit-row" id="model-edit-row-${escHtml(m.id)}">
+          <input type="text" class="adm-input" id="model-edit-name-${escHtml(m.id)}" value="${escHtml(m.name)}" placeholder="Model name"/>
+          <button class="btn-edit" onclick="saveModelEdit('${escHtml(m.id)}')">Save</button>
+          <button class="btn-del" onclick="toggleModelEditRow('${escHtml(m.id)}')">Cancel</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleModelEditRow(id) {
+  const row = document.getElementById(`model-edit-row-${id}`);
+  if (row) row.classList.toggle('open');
+}
+
+async function createModel() {
+  const nameInput = document.getElementById('newModelName');
+  const btn = document.getElementById('createModelBtn');
+  const name = nameInput.value.trim();
+
+  if (!name) { showAdmToast('Enter a model name', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding...';
+  try {
+    const res = await apiFetch('/api/admin/models', 'POST', { name });
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Model added!', 'success');
+      nameInput.value = '';
+      await loadModels();
+    }
+  } catch (e) {
+    showAdmToast('Failed to add model', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = '+ Add Model';
+}
+
+async function saveModelEdit(id) {
+  const name = document.getElementById(`model-edit-name-${id}`).value.trim();
+  if (!name) { showAdmToast('Model name cannot be empty', 'error'); return; }
+
+  try {
+    const res = await apiFetch(`/api/admin/models/${encodeURIComponent(id)}`, 'PUT', { name });
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Model updated!', 'success');
+      await loadModels();
+    }
+  } catch (e) {
+    showAdmToast('Failed to update model', 'error');
+  }
+}
+
+async function deleteModelUI(id, name) {
+  showDelModal(`Delete model "${name}"?`, 'This removes it from the master list and from every product that currently uses it. This cannot be undone.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/models/${encodeURIComponent(id)}`, 'DELETE');
+      if (res.error) {
+        showAdmToast(res.error, 'error');
+      } else {
+        showAdmToast(`✓ Model deleted (${res.productsUpdated || 0} product(s) updated)`, 'success');
+        allProducts = [];
+        await loadModels();
+        loadProducts();
+      }
+    } catch (e) {
+      showAdmToast('Failed to delete model', 'error');
+    }
+  }, { icon: '🛵', confirmText: 'Delete' });
+}
+
+/* ── ADD MEDIA FROM PASTED URL ── */
+function detectMediaTypeFromUrl(url) {
+  const clean = (url.split('?')[0] || '').toLowerCase();
+  return /\.(mp4|webm|mov|m4v)$/.test(clean) ? 'video' : 'image';
+}
+
+function addMediaFromUrlInput(key, urlInputId, gridId) {
+  const input = document.getElementById(urlInputId);
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) {
+    showAdmToast('Paste an image or video URL first', 'error');
+    return;
+  }
+  try {
+    new URL(url); // basic validation — throws on malformed URLs
+  } catch {
+    showAdmToast('That doesn\'t look like a valid URL', 'error');
+    return;
+  }
+
+  const media = getMedia(key);
+  if (media.some(m => m.url === url)) {
+    showAdmToast('That URL is already added', 'error');
+    return;
+  }
+
+  media.push({ url, type: detectMediaTypeFromUrl(url), r2Key: null });
+  setMedia(key, media);
+  renderMediaGridGeneric(gridId, key, null);
+  input.value = '';
+  showAdmToast('Image added', 'success');
+}
+
+/* ── SHARED MEDIA MANAGEMENT (used by both Add form and Edit modal) ── */
+const mediaStore = {}; // key: 'add:0', 'add:1', ... or 'edit'  → array of {url, type, r2Key}
+
+function getMedia(key) {
+  return mediaStore[key] || [];
+}
+
+function setMedia(key, media) {
+  mediaStore[key] = media;
+}
+
+function guessR2Key(url) {
+  if (!url) return null;
+  const workerMatch = url.match(/\/files\/(.+)/);
+  if (workerMatch) return workerMatch[1];
+  return null;
+}
+
+function renderMediaGridGeneric(gridId, key, urlBoxId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  const media = getMedia(key);
+  const mediaJson = JSON.stringify(media.map(m => ({ url: m.url, type: m.type }))).replace(/'/g, "&#39;");
+
+  grid.innerHTML = media.map((m, idx) => `
+    <div class="media-thumb-item">
+      <span class="media-thumb-url">${m.url}</span>
+      <div class="media-thumb-preview-wrap" onclick='openAdminLightbox(${mediaJson}, ${idx})'>
+        ${m.type === 'video'
+          ? `<video src="${m.url}" muted></video>`
+          : `<img src="${m.url}"/>`}
+        <span class="media-thumb-badge">${m.type === 'video' ? 'VID' : 'IMG'}</span>
+      </div>
+      <button type="button" class="media-thumb-remove" onclick="event.stopPropagation(); removeMediaItemGeneric('${key}', ${idx}, '${gridId}', ${urlBoxId ? `'${urlBoxId}'` : 'null'})">✕</button>
+    </div>
+  `).join('');
+
+  const firstImage = media.find(m => m.type === 'image');
+  const urlBox = urlBoxId ? document.getElementById(urlBoxId) : null;
+  if (urlBox) urlBox.value = firstImage ? firstImage.url : '';
+}
+
+async function removeMediaItemGeneric(key, idx, gridId, urlBoxId) {
+  const media = getMedia(key);
+  const item = media[idx];
+  if (!item) return;
+
+  // Delete from R2 too
+  const r2Key = item.r2Key || guessR2Key(item.url);
+  if (r2Key) {
+    try {
+      await apiFetch('/api/admin/delete-file', 'DELETE', { key: r2Key });
+    } catch (e) {
+      showAdmToast('Warning: could not delete file from storage', 'error');
+    }
+  }
+
+  media.splice(idx, 1);
+  setMedia(key, media);
+  renderMediaGridGeneric(gridId, key, urlBoxId);
+}
+
+async function uploadFilesToMedia(files, key, progWrap, bar) {
+  const media = getMedia(key);
+
+  for (let n = 0; n < files.length; n++) {
+    const file = files[n];
+
+    if (file.size > 40 * 1024 * 1024) {
+      showAdmToast(`${file.name} is too large (max 40MB)`, 'error');
+      continue;
+    }
+
+    if (!file.type.startsWith('image/') &&
+        !['video/mp4', 'video/webm'].includes(file.type)) {
+      showAdmToast(`${file.name} is not a supported file`, 'error');
+      continue;
+    }
+
+    const url = await uploadFileXHR(
+      `${API}/api/admin/upload`,
+      file,
+      'products',
+      token,
+      pct => {
+        if (bar) bar.style.width = (((n + pct / 100) / files.length) * 100) + '%';
+      }
+    );
+
+    media.push({
+      url: url,
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+      r2Key: guessR2Key(url)
+    });
+  }
+
+  setMedia(key, media);
+  return media;
+}
+
+/* ── Add-product form: uses mediaStore key `add:${i}` ── */
+function updateThumb(i) {
+  // No-op now: URL box is read-only / synced from uploads. Kept for compatibility.
+}
+
+async function handleNewImgUpload(i, input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const key = `add:${i}`;
+  const progWrap = document.getElementById(`pf-prog-${i}`);
+  const bar = document.getElementById(`pf-bar-${i}`);
+  progWrap.style.display = 'block';
+
+  try {
+    const media = await uploadFilesToMedia(files, key, progWrap, bar);
+    renderMediaGridGeneric(`pf-media-grid-${i}`, key, null);
+    progWrap.style.display = 'none';
+    showAdmToast(`${media.length} file(s) total`, 'success');
+  } catch (e) {
+    progWrap.style.display = 'none';
+    showAdmToast('Upload failed: ' + e.message, 'error');
+  }
+}
+async function saveAllProducts() {
+  const btn = document.getElementById('saveProductsBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  const products = productForms.map((_, i) => {
+    const media = getMedia(`add:${i}`);
+    const firstImage = media.find(m => m.type === 'image');
+
+    return {
+      name:        document.getElementById(`pf-name-${i}`)?.value.trim() || '',
+      price:       document.getElementById(`pf-price-${i}`)?.value.trim() || '',
+      description: document.getElementById(`pf-desc-${i}`)?.value.trim() || '',
+      category:    document.getElementById(`pf-cat-${i}`)?.value || 'accessories',
+      badge:       document.getElementById(`pf-badge-${i}`)?.value.trim() || '',
+      inStock:     document.getElementById(`pf-stock-${i}`)?.value !== 'false',
+      imageUrl:    firstImage ? firstImage.url : '',
+      media:       media,
+      models:      getSelectedModels(`add:${i}`)
+    };
+  }).filter(p => p.name && p.price);
+
+  if (!products.length) {
+    showAdmToast('Please fill in at least one product name and price.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Save Products';
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/admin/products', 'POST', products);
+
+    if (res.success) {
+      showAdmToast(`✓ ${res.added} product(s) added!`, 'success');
+
+      // Reset forms
+      productForms = [];
+      Object.keys(mediaStore).forEach(k => { if (k.startsWith('add:')) delete mediaStore[k]; });
+      Object.keys(modelSelStore).forEach(k => { if (k.startsWith('add:')) delete modelSelStore[k]; });
+      addProductForm();
+      loadProducts();
+    } else {
+      showAdmToast(res.error || 'Save failed', 'error');
+    }
+  } catch {
+    showAdmToast('Network error', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Products';
+}
+
+async function bulkApplyModels() {
+  const models = getSelectedModels('bulk');
+  const category = document.getElementById('bulkCategorySelect')?.value || 'all';
+  const btn = document.getElementById('bulkApplyBtn');
+
+  if (!models.length) {
+    showAdmToast('Pick at least one model to apply', 'error');
+    return;
+  }
+
+  const label = category === 'all'
+    ? 'ALL products'
+    : `every product in "${allCategories.find(c => c.id === category)?.label || category}"`;
+
+  const modelNames = models.map(modelName).join(', ');
+
+  showDelModal(`Apply models [${modelNames}]?`, `This replaces the existing compatible models for ${label}.`, async () => {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Applying...';
+
+    try {
+      const res = await apiFetch('/api/admin/products/bulk-models', 'POST', { models, category });
+      if (res.success) {
+        showAdmToast(`✓ Models applied to ${res.updatedCount} product(s)`, 'success');
+        allProducts = [];
+        loadProducts();
+      } else {
+        showAdmToast(res.error || 'Bulk apply failed', 'error');
+      }
+    } catch {
+      showAdmToast('Network error', 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Apply Models';
+  }, { icon: '🛵', confirmText: 'Apply' });
+}
+
+async function loadProducts() {
+  try {
+    const products = await apiFetch('/api/products', 'GET', null, false);
+    allProducts = Array.isArray(products) ? products : [];
+    const tbody    = document.getElementById('productsTableBody');
+    document.getElementById('totalProducts').textContent = products.length;
+    document.getElementById('nc-products').textContent   = products.length;
+
+    if (!products.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">No products yet. Add above!</td></tr>';
+      renderCategoriesList();
+      renderModelsList();
+      return;
+    }
+
+    tbody.innerHTML = products.map(p => {
+      const media = Array.isArray(p.media) && p.media.length
+        ? p.media
+        : (p.imageUrl ? [{ url: p.imageUrl, type: 'image' }] : []);
+      const modelTags = Array.isArray(p.models) && p.models.length
+        ? p.models.map(mid => `<span class="badge-cat">${escHtml(modelName(mid))}</span>`).join(' ')
+        : '<span style="color:var(--muted);font-size:.78rem;">All models</span>';
+      return `
+      <tr data-id="${p.id}">
+        <td><img src="${p.imageUrl || 'https://via.placeholder.com/44'}" class="prod-thumb" onerror="this.src='https://via.placeholder.com/44'" onclick='openAdminLightbox(${JSON.stringify(media).replace(/'/g, "&#39;")}, 0)'></td>
+        <td>${escHtml(p.name)}</td>
+        <td><span class="badge-cat">${p.category}</span></td>
+        <td style="font-weight:600;">${escHtml(p.price)}</td>
+        <td>${modelTags}</td>
+        <td>${p.inStock === false ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-instock">In Stock</span>'}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-edit" onclick="openEditModal('${p.id}')">Edit</button>
+            <button class="btn-del" data-prod-id="${p.id}" data-prod-name="${escHtml(p.name)}" onclick="deleteProduct(this.dataset.prodId, this.dataset.prodName)">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+    }).join('');
+    renderCategoriesList(); // keep per-category product counts in sync
+    renderModelsList();     // keep per-model product counts in sync
+  } catch {
+    showAdmToast('Could not load products', 'error');
+  }
+}
+
+/* ── EDIT MODAL ── */
+let allProducts = [];
+async function openEditModal(id) {
+  if (!allProducts.length) {
+    allProducts = await apiFetch('/api/products', 'GET', null, false);
+  }
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+
+  document.getElementById('editProductId').value  = p.id;
+  document.getElementById('editName').value        = p.name;
+  document.getElementById('editPrice').value       = p.price;
+  document.getElementById('editDesc').value        = p.description || '';
+  document.getElementById('editCategory').value    = p.category;
+  document.getElementById('editBadge').value       = p.badge || '';
+  document.getElementById('editStock').value       = p.inStock === false ? 'false' : 'true';
+  cddSync(document.getElementById('editCategory'));
+  cddSync(document.getElementById('editStock'));
+
+  // Load existing media (multiple images/videos) or fall back to legacy single image
+  const existingMedia = Array.isArray(p.media) && p.media.length
+    ? p.media.map(m => ({ url: m.url, type: m.type || 'image', r2Key: m.r2Key || null }))
+    : (p.imageUrl ? [{ url: p.imageUrl, type: 'image', r2Key: p.r2Key || null }] : []);
+
+  setMedia('edit', existingMedia);
+  renderMediaGridGeneric('edit-media-grid', 'edit', null);
+
+  setSelectedModels('edit', Array.isArray(p.models) ? [...p.models] : []);
+  renderModelChips('edit-models', 'edit');
+
+  document.getElementById('editModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  document.body.style.overflow = '';
+  setMedia('edit', []);
+  setSelectedModels('edit', []);
+}
+
+async function handleEditImageUpload(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const prog = document.getElementById('editUploadProg');
+  const bar  = document.getElementById('editUploadBar');
+  prog.style.display = 'block';
+
+  try {
+    const media = await uploadFilesToMedia(files, 'edit', prog, bar);
+    renderMediaGridGeneric('edit-media-grid', 'edit', null);
+    prog.style.display = 'none';
+    showAdmToast(`${media.length} file(s) total`, 'success');
+  } catch (e) {
+    prog.style.display = 'none';
+    showAdmToast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+async function saveEditProduct() {
+  const id  = document.getElementById('editProductId').value;
+  const btn = document.getElementById('saveEditBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  const media = getMedia('edit');
+  const firstImage = media.find(m => m.type === 'image');
+
+  try {
+    const res = await apiFetch(`/api/admin/products/${id}`, 'PUT', {
+      name:        document.getElementById('editName').value.trim(),
+      price:       document.getElementById('editPrice').value.trim(),
+      description: document.getElementById('editDesc').value.trim(),
+      category:    document.getElementById('editCategory').value,
+      badge:       document.getElementById('editBadge').value.trim(),
+      inStock:     document.getElementById('editStock').value !== 'false',
+      imageUrl:    firstImage ? firstImage.url : '',
+      media:       media,
+      models:      getSelectedModels('edit'),
+    });
+    if (res.success) {
+      showAdmToast('✓ Product updated!', 'success');
+      closeEditModal();
+      allProducts = [];
+      loadProducts();
+    } else {
+      showAdmToast(res.error || 'Update failed', 'error');
+    }
+  } catch { showAdmToast('Network error', 'error'); }
+
+  btn.disabled = false; btn.textContent = 'Save Changes';
+}
+
+async function deleteProduct(id, name) {
+  showDelModal(`Delete "${name}"?`, 'This will permanently remove the product and its image.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/products/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Product deleted!', 'success'); allProducts = []; loadProducts(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
+}
+
+/* ══════════════════════════════
+   ORDERS
+══════════════════════════════ */
+async function loadOrders() {
+  try {
+    const orders = await apiFetch('/api/admin/orders');
+    document.getElementById('totalOrders').textContent = orders.length;
+    document.getElementById('nc-orders').textContent   = orders.length;
+    const cont = document.getElementById('ordersContainer');
+
+    if (!orders.length) {
+      cont.innerHTML = '<div class="empty-state"><div class="es-icon">📦</div><p>No orders yet.</p></div>';
+      return;
+    }
+
+    cont.innerHTML = orders.map(o => `
+      <div class="order-card">
+        <div class="order-card-header">
+          <span class="order-id">ID: ${o.id}</span>
+          <span class="order-date">${new Date(o.createdAt).toLocaleString('en-IN')}</span>
+          <button class="btn-del" onclick="deleteOrder('${o.id}')">Delete</button>
+        </div>
+        <div class="order-info-grid">
+          <div class="oi-item"><label>Customer Name</label><span>${escHtml(o.name)}</span></div>
+          <div class="oi-item"><label>Phone</label><span>${escHtml(o.phone)}</span></div>
+          <div class="oi-item" style="grid-column:1/-1"><label>Delivery Address</label><span>${escHtml(o.address)}</span></div>
+        </div>
+        <div class="order-items-list">
+          ${(o.items || []).map(it => `
+            <div class="order-item-row">
+              <span>${escHtml(it.name)}${it.model ? ` <strong style="color:var(--accent)">(Model: ${escHtml(modelName(it.model))})</strong>` : ''} × ${it.quantity}</span>
+              <span>Rs.${it.lineTotal ?? (it.unitPrice * it.quantity)}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="order-total">Total: Rs.${o.total || '—'}</div>
+      </div>
+    `).join('');
+  } catch { showAdmToast('Could not load orders', 'error'); }
+}
+
+async function deleteOrder(id) {
+  showDelModal('Delete this order?', 'Order record will be permanently removed.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/orders/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Order deleted', 'success'); loadOrders(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
+}
+
+/* ══════════════════════════════
+   REVIEWS
+══════════════════════════════ */
+async function loadReviews() {
+  try {
+    const reviews = await apiFetch('/api/reviews', 'GET', null, false);
+    document.getElementById('totalReviews').textContent = reviews.length;
+    document.getElementById('nc-reviews').textContent   = reviews.length;
+    const cont = document.getElementById('reviewsContainer');
+
+    if (!reviews.length) {
+      cont.innerHTML = '<div class="empty-state"><div class="es-icon">💬</div><p>No reviews yet.</p></div>';
+      return;
+    }
+
+    cont.innerHTML = reviews.map(r => {
+      const mediaList = Array.isArray(r.media) && r.media.length
+        ? r.media
+        : (r.mediaUrl ? [{ url: r.mediaUrl, type: r.mediaType || 'image' }] : []);
+      const mediaJson = JSON.stringify(mediaList.map(m => ({ url: m.url, type: m.type }))).replace(/'/g, "&#39;");
+
+      const mediaHtml = mediaList.length ? `<div class="rac-media ${mediaList.length === 1 ? 'rac-media-1' : ''}">
+        ${mediaList.map((m, idx) => m.type === 'video'
+          ? `<video src="${m.url}" muted onclick='openAdminLightbox(${mediaJson}, ${idx})'></video>`
+          : `<img src="${m.url}" onclick='openAdminLightbox(${mediaJson}, ${idx})'>`
+        ).join('')}
+      </div>` : '';
+
+      return `
+      <div class="review-admin-card">
+        <div class="rac-header">
+          <div class="rac-meta">
+            <div class="rac-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+            <div class="rac-name">${escHtml(r.name)}</div>
+            <div class="rac-date">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+            <div class="rac-text">"${escHtml(r.text)}"</div>
+            ${mediaHtml}
+          </div>
+          <button class="btn-del" onclick="deleteReview('${r.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+    }).join('');
+  } catch { showAdmToast('Could not load reviews', 'error'); }
+}
+
+async function deleteReview(id) {
+  showDelModal('Delete this review?', 'Review and any attached media will be permanently removed.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/reviews/${id}`, 'DELETE');
+      if (res.success) { showAdmToast('✓ Review deleted', 'success'); loadReviews(); }
+      else showAdmToast(res.error || 'Delete failed', 'error');
+    } catch { showAdmToast('Network error', 'error'); }
+  });
+}
+
+/* ══════════════════════════════
+   FILE UPLOAD XHR (with progress)
+══════════════════════════════ */
+function uploadFileXHR(url, file, folder, authToken, onProgress) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+    });
+    xhr.addEventListener('load', () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success) resolve(data.url);
+        else reject(new Error(data.error || 'Upload failed'));
+      } catch { reject(new Error('Upload failed')); }
+    });
+    xhr.addEventListener('error', () => reject(new Error('Network error')));
+    xhr.open('POST', url);
+    if (authToken) xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+    xhr.send(formData);
+  });
+}
+
+/* ══════════════════════════════
+   HELPERS
+══════════════════════════════ */
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let _toastTimer;
+function showAdmToast(msg, type = '') {
+  const t = document.getElementById('admToast');
+  t.textContent = msg;
+  t.className   = 'adm-toast show' + (type ? ` ${type}` : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════
+   CUSTOM DELETE MODAL
+══════════════════════════════ */
+let _delCallback = null;
+function showDelModal(title, msg, onConfirm, opts = {}) {
+  document.getElementById('delModalTitle').textContent = title;
+  document.getElementById('delModalMsg').textContent   = msg;
+  document.getElementById('delModalIcon').textContent  = opts.icon || '🗑️';
+  document.getElementById('delBtnConfirm').textContent = opts.confirmText || 'Delete';
+  _delCallback = onConfirm;
+  document.getElementById('delModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDelModal() {
+  document.getElementById('delModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ══════════════════════════════
+   BOOT
+══════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+  // Delete modal confirm button
+  document.getElementById('delBtnConfirm').addEventListener('click', () => {
+    const cb = _delCallback;
+    _delCallback = null;
+    closeDelModal();
+    if (cb) cb();
+  });
+
+  // Close delete modal on backdrop click
+  document.getElementById('delModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDelModal();
+  });
+
+  // Close edit modal on backdrop click
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closeDelModal(); }
+});
+</script>
+</body>
+</html>
