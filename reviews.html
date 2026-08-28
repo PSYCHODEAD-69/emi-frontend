@@ -32,6 +32,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <script>
+    /* Apply the stored theme before first paint to avoid a flash of the
+       wrong theme (same emi_theme key / data-theme attribute used by the
+       page's own initTheme() later on DOMContentLoaded). */
+    (function () {
+      try {
+        var stored = localStorage.getItem("emi_theme");
+        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", stored || (prefersDark ? "dark" : "light"));
+      } catch (e) {}
+    })();
+  </script>
   <script src="config.js"></script>
   <style>
     /* ── REVIEWS PAGE — hardcoded light theme colors ── */
@@ -44,6 +56,11 @@
       --rv-accent:  #ff4d2e;
       --rv-font-d:  'Playfair Display', serif;
       --rv-font-b:  'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--rv-bg);
+      color: var(--rv-text);
     }
 
     .reviews-page-hero {
@@ -237,7 +254,7 @@
     }
   </style>
 </head>
-<body style="background:#f5f2ec;">
+<body>
 
   <!-- FLOATING WHATSAPP -->
   <a href="#" class="float-wa" id="floatWA" title="Order on WhatsApp">
