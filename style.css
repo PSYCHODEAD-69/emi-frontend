@@ -2266,17 +2266,8 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 }
 [data-theme="dark"] .pm-dp-cancel:hover { background: var(--border); }
 
-/* Reviews page uses its own hardcoded --rv-* light palette — remap
-   those variables too so reviews.html follows the same toggle. */
-[data-theme="dark"] {
-  --rv-bg:      #0e1210;
-  --rv-surface: #161b19;
-  --rv-border:  rgba(255,255,255,0.09);
-  --rv-text:    #f0efe9;
-  --rv-muted:   #9a9690;
-}
-[data-theme="dark"] .review-card,
-[data-theme="dark"] .add-review-section {
-  background: var(--rv-surface); border-color: var(--rv-border);
-}
-[data-theme="dark"] .reviews-page-hero { background: var(--rv-bg); }
+/* Note: reviews.html defines and dark-mode-remaps its own --rv-* variables
+   inline (in its own <style> block), since that file loads after this
+   stylesheet — a same-specificity :root override here would be silently
+   beaten by reviews.html's later :root block. See reviews.html for the
+   --rv-* dark values. */
