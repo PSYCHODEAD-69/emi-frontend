@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Mitra — Bulk Product Migration</title>
+<style>
+  :root{
+    --bg:#0d0d0d; --panel:#161616; --border:#2a2a2a; --text:#eee; --muted:#999;
+    --green:#22c55e; --green-dark:#16a34a; --red:#ef4444; --gold:#c9a227;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text); font-family:Arial, Helvetica, sans-serif;
+    margin:0; padding:24px 16px 80px; max-width:760px; margin-inline:auto;
+  }
+  h1{font-family:Georgia, 'Times New Roman', serif; font-size:26px; margin:0 0 4px;}
+  p.sub{color:var(--muted); margin:0 0 24px; font-size:14px;}
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:18px; margin-bottom:18px;
+  }
+  .panel h2{font-size:15px; margin:0 0 12px; font-family:Georgia, serif;}
+  label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
+  input[type=text], input[type=password]{
+    width:100%; background:#0f0f0f; border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; border-radius:6px; font-size:14px; margin-bottom:12px;
+  }
+  input:focus{outline:1px solid var(--gold);}
+  button{
+    background:var(--green); color:#04140a; font-weight:bold; border:none;
+    padding:12px 18px; border-radius:6px; cursor:pointer; font-size:14px;
+    transition:background .15s;
+  }
+  button:hover{background:var(--green-dark);}
+  button:disabled{background:#3a3a3a; color:#777; cursor:not-allowed;}
+  button.secondary{background:transparent; border:1px solid var(--border); color:var(--text);}
+  button.secondary:hover{background:#222;}
+  #log{
+    background:#0a0a0a; border:1px solid var(--border); border-radius:6px;
+    padding:12px; font-family:'Courier New', monospace; font-size:12.5px;
+    max-height:360px; overflow-y:auto; white-space:pre-wrap; line-height:1.6;
+  }
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .ok{color:var(--green);}
+  .err{color:var(--red);}
+  .info{color:#7fb3ff;}
+  .warn{color:var(--gold);}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px;}
+  th, td{border:1px solid var(--border); padding:6px 8px; text-align:left;}
+  th{background:#1c1c1c;}
+  .badge{
+    display:inline-block; background:#1c1c1c; border:1px solid var(--border);
+    padding:2px 8px; border-radius:20px; font-size:11px; color:var(--muted);
+  }
+  #summary{margin-top:10px; font-size:13px;}
+  .progress-wrap{background:#0a0a0a; border-radius:6px; height:8px; overflow:hidden; margin:10px 0; border:1px solid var(--border);}
+  .progress-bar{height:100%; width:0%; background:var(--green); transition:width .2s;}
+</style>
+</head>
+<body>
+
+<h1>EV Mitra — Bulk Product Migration</h1>
+<p class="sub">One-time tool to push all 51 catalog products into the EMI backend in a single run. Uses your existing <code>/api/admin/products</code> bulk endpoint. Nothing here touches your repo — this is just a local page.</p>
+
+<div class="panel">
+  <h2>1. Connection</h2>
+  <label for="apiBase">Worker API base URL</label>
+  <input type="text" id="apiBase" placeholder="https://your-worker.your-subdomain.workers.dev">
+  <label for="username">Admin username</label>
+  <input type="text" id="username" autocomplete="off">
+  <label for="password">Admin password</label>
+  <input type="password" id="password" autocomplete="off">
+  <button id="loginBtn">Login</button>
+  <span id="loginStatus" style="margin-left:10px; font-size:13px;"></span>
+</div>
+
+<div class="panel">
+  <h2>2. Categories &amp; Models check</h2>
+  <p class="sub" style="margin-bottom:10px;">Before importing, this checks that every category and model name used below already exists in your backend (it does <strong>not</strong> create them — add any missing ones in the admin panel first).</p>
+  <button id="checkBtn" class="secondary" disabled>Check categories &amp; models</button>
+  <div id="checkResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="panel">
+  <h2>3. Import</h2>
+  <p class="sub" style="margin-bottom:10px;">51 products will be sent in <strong>one</strong> bulk POST request to <code>/api/admin/products</code>.</p>
+  <div class="row">
+    <button id="importBtn" disabled>Import all 51 products</button>
+    <button id="dryRunBtn" class="secondary" disabled>Preview JSON only</button>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div id="summary"></div>
+</div>
+
+<div class="panel">
+  <h2>Log</h2>
+  <div id="log">Waiting for login…</div>
+</div>
+
+<script>
+/* ============================================================
+   PRODUCT DATA — name, price, category, description, models
+   Categories and model names below MUST exactly match the
+   "Existing Categories" / "Existing Models" names already set
+   up in your admin panel (case-sensitive).
+   ============================================================ */
+const ALL_MODELS = ["Ola S1", "Ola S1 Pro", "Ola S1 Air", "Ola S1X", "Ola S1X+"];
+const GEN1_MODELS = ["Ola S1", "Ola S1 Pro"];
+const GEN2_MODELS = ["Ola S1 Air", "Ola S1 Pro"];
+const S1X_MODEL   = ["Ola S1X"];
+const GEN3_S1PRO  = ["Ola S1 Pro"];
+
+const PRODUCTS = [
+  // ── Braking System ──
+  {name:"Ola Brake Pad Front/Rear (Single)", price:"56", category:"Braking System", models:ALL_MODELS,
+   description:"Standard replacement brake pad for Ola scooter front or rear disc brake assembly, sold individually for regular maintenance."},
+  {name:"Ola Brake Pad Front/Rear (ASK)", price:"78", category:"Braking System", models:ALL_MODELS,
+   description:"Premium ASK-grade brake pad offering enhanced friction and durability for front or rear disc brake systems."},
+  {name:"Ola Brake Shoe Front/Rear", price:"125", category:"Braking System", models:ALL_MODELS,
+   description:"Standard drum brake shoe component designed for reliable front or rear braking performance."},
+  {name:"Ola Brake Shoe Front/Rear (ASK)", price:"155", category:"Braking System", models:ALL_MODELS,
+   description:"Premium ASK-grade drum brake shoe offering improved stopping power and longer service life."},
+  {name:"Master Cylinder", price:"750pc / 1500set", category:"Braking System", models:ALL_MODELS,
+   description:"Hydraulic master cylinder generating brake fluid pressure for the disc braking system, single piece or full set."},
+  {name:"Disc Plate Front", price:"460", category:"Braking System", models:ALL_MODELS,
+   description:"Front wheel brake disc rotor providing friction surface for caliper-based stopping power."},
+  {name:"Disc Plate Rear", price:"460", category:"Braking System", models:ALL_MODELS,
+   description:"Rear wheel brake disc rotor designed for consistent braking performance and heat dissipation."},
+  {name:"Drum Brake Cable Front", price:"150", category:"Braking System", models:ALL_MODELS,
+   description:"Mechanical cable linking front brake lever to the drum brake mechanism."},
+  {name:"Drum Brake Cable Rear", price:"175", category:"Braking System", models:ALL_MODELS,
+   description:"Mechanical cable connecting rear brake pedal/lever to the drum brake assembly."},
+  {name:"Disc Pipe Rear/Front (Single)", price:"400", category:"Braking System", models:ALL_MODELS,
+   description:"Hydraulic brake line carrying brake fluid to front or rear disc caliper."},
+  {name:"Brake Lever Set Drum", price:"210", category:"Braking System", models:ALL_MODELS,
+   description:"Complete handlebar-mounted brake lever set for drum brake variants."},
+  {name:"Brake Lever Set Disc", price:"210", category:"Braking System", models:ALL_MODELS,
+   description:"Complete handlebar-mounted brake lever set for disc brake variants."},
+  {name:"Ola Drum Brake Yoke Set", price:"1450", category:"Braking System", models:ALL_MODELS,
+   description:"Complete yoke assembly connecting drum brake mechanism to the wheel hub."},
+  {name:"Caliper", price:"1100", category:"Braking System", models:ALL_MODELS,
+   description:"Brake caliper assembly applying pressure to brake pads against the disc rotor."},
+
+  // ── Electrical System ──
+  {name:"Ola LV Cable", price:"750", category:"Electrical System", models:ALL_MODELS,
+   description:"Low voltage wiring cable connecting control and power components."},
+  {name:"Charging Rubber Cap", price:"50", category:"Electrical System", models:ALL_MODELS,
+   description:"Protective rubber cap covering the charging port from dust and moisture."},
+  {name:"Keypad Rubber (5 Sets)", price:"1300", category:"Electrical System", models:ALL_MODELS,
+   description:"Pack of five rubber keypad covers for control panel buttons."},
+  {name:"Charging Plastic Cover", price:"270", category:"Electrical System", models:ALL_MODELS,
+   description:"Plastic cover panel protecting the charging port area."},
+  {name:"Ola Brake Sensor with Wire", price:"180", category:"Electrical System", models:ALL_MODELS,
+   description:"Brake sensor with wiring that signals brake activation to the control system."},
+  {name:"Indicator", price:"535/pc", category:"Electrical System", models:ALL_MODELS,
+   description:"Turn indicator light unit for signaling direction changes, priced per piece."},
+  {name:"Headlight", price:"1390", category:"Electrical System", models:ALL_MODELS,
+   description:"Front headlight assembly for night-time and low-visibility riding."},
+
+  // ── Body & Panels ──
+  {name:"Ola Gen 1 Floor Board", price:"950", category:"Body & Panels", models:GEN1_MODELS,
+   description:"Full floorboard panel forming the flat foot area between seat and front panel."},
+  {name:"Bottom Shell", price:"450", category:"Body & Panels", models:ALL_MODELS,
+   description:"Lower body panel protecting the scooter's underside components."},
+  {name:"Ola Rear Side Panel", price:"900", category:"Body & Panels", models:ALL_MODELS,
+   description:"Rear body side panel forming part of the outer shell and rear styling."},
+  {name:"Ola G1 Front Side Panel", price:"800", category:"Body & Panels", models:GEN1_MODELS,
+   description:"Front body side panel covering the front section of the frame."},
+  {name:"Ola Gen 1 Mud Guard", price:"295", category:"Body & Panels", models:GEN1_MODELS,
+   description:"Protective mud guard shielding the rider from water and road debris."},
+  {name:"Ola Gen 2 Mud Guard", price:"295", category:"Body & Panels", models:GEN2_MODELS,
+   description:"Protective mud guard shielding the rider from water and road debris."},
+  {name:"Ola Top Shell", price:"500", category:"Body & Panels", models:ALL_MODELS,
+   description:"Upper body shell forming the top structural covering of the frame."},
+  {name:"Front Panel", price:"1450", category:"Body & Panels", models:ALL_MODELS,
+   description:"Front-facing body panel housing the headlight assembly."},
+  {name:"Rear Fender", price:"350", category:"Body & Panels", models:ALL_MODELS,
+   description:"Rear fender covering the rear wheel area against splashes and debris."},
+  {name:"Ola Grab Handle Cap", price:"15", category:"Body & Panels", models:ALL_MODELS,
+   description:"Protective plastic cap fitted onto the grab handle for finish and durability."},
+
+  // ── Body & Comfort ──
+  {name:"Ladies Footrest", price:"280", category:"Body & Comfort", models:ALL_MODELS,
+   description:"Additional footrest accessory for pillion/lady passenger comfort."},
+  {name:"Ola 3D Floor Mat", price:"200", category:"Body & Comfort", models:ALL_MODELS,
+   description:"Textured 3D-design rubber floor mat for grip and comfort."},
+  {name:"Ola Rubber Mat", price:"90", category:"Body & Comfort", models:ALL_MODELS,
+   description:"Basic rubber floor mat providing a non-slip surface."},
+  {name:"Ola Footrest Right/Left", price:"380", category:"Body & Comfort", models:ALL_MODELS,
+   description:"Rider footrest available for right or left side fitting."},
+  {name:"Seat Lock Gen 1", price:"1200", category:"Body & Comfort", models:GEN1_MODELS,
+   description:"Seat locking mechanism allowing secure access to under-seat storage."},
+
+  // ── Suspension System ──
+  {name:"Ola Swing Arm Bearing", price:"50", category:"Suspension System", models:ALL_MODELS,
+   description:"Bearing fitted within the swing arm for smooth rear wheel movement."},
+  {name:"Link Bush", price:"8", category:"Suspension System", models:ALL_MODELS,
+   description:"Small bushing used in linkage points to absorb vibration and wear."},
+  {name:"Side Stand", price:"280", category:"Suspension System", models:ALL_MODELS,
+   description:"Support stand allowing the scooter to be parked upright on one leg."},
+  {name:"Middle Stand", price:"290", category:"Suspension System", models:ALL_MODELS,
+   description:"Central stand for stable, upright two-wheel-lifted parking."},
+  {name:"Ola G1 Rear Shocker", price:"900", category:"Suspension System", models:GEN1_MODELS,
+   description:"Rear suspension shock absorber ensuring a smooth, stable ride."},
+  {name:"Ola Gen 2 Front Shocker", price:"2600", category:"Suspension System", models:GEN2_MODELS,
+   description:"Front suspension shock absorber absorbing road impact."},
+  {name:"Ola Cone Set", price:"230", category:"Suspension System", models:ALL_MODELS,
+   description:"Steering cone bearing set enabling smooth handlebar rotation."},
+
+  // ── Transmission System ──
+  {name:"Ola Gen 3 Chain Set S1X", price:"Market Rate", category:"Transmission System", models:S1X_MODEL,
+   description:"Drive chain set compatible with Ola Gen 3 S1X models."},
+  {name:"Ola Gen 3 Chain Set S1 Pro", price:"Market Rate", category:"Transmission System", models:GEN3_S1PRO,
+   description:"Drive chain set compatible with Ola Gen 3 S1 Pro models."},
+  {name:"JKF Copy Belt", price:"800", category:"Transmission System", models:ALL_MODELS,
+   description:"Aftermarket replica drive belt for belt-driven transmission."},
+  {name:"JKF Original Belt Gen 1", price:"Market Rate", category:"Transmission System", models:GEN1_MODELS,
+   description:"Genuine JKF drive belt for Gen 1 models."},
+  {name:"JKF Original Belt Gen 2", price:"Market Rate", category:"Transmission System", models:GEN2_MODELS,
+   description:"Genuine JKF drive belt for Gen 2 models."},
+  {name:"Ola Belt Pulley", price:"640", category:"Transmission System", models:ALL_MODELS,
+   description:"Pulley transferring motor power to the wheel in the belt-drive system."},
+
+  // ── Hardware & Fasteners ──
+  {name:"Wheel Bolt", price:"28", category:"Hardware & Fasteners", models:ALL_MODELS,
+   description:"Standard wheel mounting bolt securing the wheel hub to the frame."},
+  {name:"White V Clips", price:"4", category:"Hardware & Fasteners", models:ALL_MODELS,
+   description:"Small V-shaped clips used to secure body panels and trim pieces."},
+];
+
+let TOKEN = null;
+const logEl = document.getElementById("log");
+function log(msg, cls){
+  const line = document.createElement("div");
+  if(cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog(){ logEl.innerHTML = ""; }
+
+function apiBase(){
+  return document.getElementById("apiBase").value.trim().replace(/\/+$/,"");
+}
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  clearLog();
+  const base = apiBase();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const statusEl = document.getElementById("loginStatus");
+
+  if(!base || !username || !password){
+    log("Fill in API base URL, username, and password first.", "err");
+    return;
+  }
+  statusEl.textContent = "Logging in…";
+  try{
+    const res = await fetch(`${base}/api/auth/login`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if(!res.ok || !data.token){
+      statusEl.textContent = "";
+      log(`Login failed: ${data.error || res.status}`, "err");
+      return;
+    }
+    TOKEN = data.token;
+    statusEl.textContent = "✓ Logged in";
+    statusEl.className = "ok";
+    log("Login successful. Token acquired.", "ok");
+    document.getElementById("checkBtn").disabled = false;
+    document.getElementById("importBtn").disabled = false;
+    document.getElementById("dryRunBtn").disabled = false;
+  }catch(e){
+    statusEl.textContent = "";
+    log(`Network error during login: ${e.message}`, "err");
+    log("If this is a CORS error, make sure ALLOWED_ORIGIN on the worker includes the origin this page is served from (or open this file via a local server, not file://).", "warn");
+  }
+});
+
+document.getElementById("checkBtn").addEventListener("click", async () => {
+  const base = apiBase();
+  const resultEl = document.getElementById("checkResult");
+  resultEl.innerHTML = "Checking…";
+  try{
+    const [catRes, modRes] = await Promise.all([
+      fetch(`${base}/api/categories`),
+      fetch(`${base}/api/models`)
+    ]);
+    const cats = await catRes.json();
+    const mods = await modRes.json();
+    const existingCatNames = (Array.isArray(cats) ? cats : []).map(c => (c.name || c).toString());
+    const existingModNames = (Array.isArray(mods) ? mods : []).map(m => (m.name || m).toString());
+
+    const neededCats = [...new Set(PRODUCTS.map(p => p.category))];
+    const neededMods = [...new Set(PRODUCTS.flatMap(p => p.models))];
+
+    const missingCats = neededCats.filter(c => !existingCatNames.includes(c));
+    const missingMods = neededMods.filter(m => !existingModNames.includes(m));
+
+    let html = "";
+    if(missingCats.length === 0){
+      html += `<div class="ok">✓ All ${neededCats.length} categories already exist.</div>`;
+    } else {
+      html += `<div class="err">✗ Missing categories (add these first): ${missingCats.map(c=>`<span class="badge">${c}</span>`).join(" ")}</div>`;
+    }
+    if(missingMods.length === 0){
+      html += `<div class="ok">✓ All ${neededMods.length} models already exist.</div>`;
+    } else {
+      html += `<div class="err">✗ Missing models (add these first): ${missingMods.map(m=>`<span class="badge">${m}</span>`).join(" ")}</div>`;
+      html += `<div class="warn" style="margin-top:6px;">Your admin panel showed "Ola S1X+" but no product below uses it — that's fine, it just won't be assigned to anything yet.</div>`;
+    }
+    resultEl.innerHTML = html;
+  }catch(e){
+    resultEl.innerHTML = `<span class="err">Check failed: ${e.message}</span>`;
+  }
+});
+
+document.getElementById("dryRunBtn").addEventListener("click", () => {
+  clearLog();
+  log(`Prepared payload — ${PRODUCTS.length} products:`, "info");
+  log(JSON.stringify(PRODUCTS, null, 2));
+});
+
+document.getElementById("importBtn").addEventListener("click", async () => {
+  if(!TOKEN){ log("Login first.", "err"); return; }
+  const base = apiBase();
+  const btn = document.getElementById("importBtn");
+  const bar = document.getElementById("progressBar");
+  const summary = document.getElementById("summary");
+  btn.disabled = true;
+  clearLog();
+  bar.style.width = "10%";
+  log(`Sending ${PRODUCTS.length} products in one bulk request to ${base}/api/admin/products …`, "info");
+
+  try{
+    const res = await fetch(`${base}/api/admin/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${TOKEN}`
+      },
+      body: JSON.stringify(PRODUCTS)
+    });
+    bar.style.width = "80%";
+    const data = await res.json();
+    if(!res.ok){
+      bar.style.width = "0%";
+      log(`Import failed (HTTP ${res.status}): ${data.error || "unknown error"}`, "err");
+      summary.innerHTML = `<span class="err">Failed — no products were added.</span>`;
+      btn.disabled = false;
+      return;
+    }
+    bar.style.width = "100%";
+    log(`✓ Success — server added ${data.added} product(s).`, "ok");
+    (data.products || []).forEach(p => log(`  • ${p.name}  [${p.category}]  ₹${p.price}`, "ok"));
+    summary.innerHTML = `<div class="ok">✓ Imported ${data.added} of ${PRODUCTS.length} products successfully.</div>`;
+  }catch(e){
+    bar.style.width = "0%";
+    log(`Network error: ${e.mes
