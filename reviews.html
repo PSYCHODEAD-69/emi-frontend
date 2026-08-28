@@ -53,9 +53,22 @@
       --rv-border:  #e8e4da;
       --rv-text:    #1a1714;
       --rv-muted:   #888;
-      --rv-accent:  #ff4d2e;
+      --rv-accent:  #0ea86b;
       --rv-font-d:  'Playfair Display', serif;
       --rv-font-b:  'DM Sans', sans-serif;
+    }
+    /* Dark mode values live here (not just in style.css) because this
+       block loads after style.css in the document — same-specificity
+       :root rules that come later in source order win, so keeping the
+       dark override in the same file/position it needs to beat avoids
+       the earlier external override being silently discarded. */
+    [data-theme="dark"] {
+      --rv-bg:      #0e1210;
+      --rv-surface: #161b19;
+      --rv-border:  rgba(255,255,255,0.09);
+      --rv-text:    #f0efe9;
+      --rv-muted:   #9a9690;
+      --rv-accent:  #0ea86b;
     }
 
     body {
