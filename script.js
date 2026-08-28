@@ -53,7 +53,7 @@ function renderCategoryTabs() {
   const wrap = document.getElementById("catGrid");
   if (!wrap) return;
 
-  const allImg = "/assets/all-cat.png";
+  const allImg = "assets/all-cat.png";
   const placeholderImg = "https://via.placeholder.com/60?text=%20";
 
   const tabsHtml = [`
