@@ -361,4 +361,11 @@ document.getElementById("importBtn").addEventListener("click", async () => {
     summary.innerHTML = `<div class="ok">✓ Imported ${data.added} of ${PRODUCTS.length} products successfully.</div>`;
   }catch(e){
     bar.style.width = "0%";
-    log(`Network error: ${e.mes
+    log(`Network error: ${e.message}`, "err");
+    summary.innerHTML = `<span class="err">Failed — check the log above.</span>`;
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
