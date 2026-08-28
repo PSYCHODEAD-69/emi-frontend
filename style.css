@@ -17,6 +17,12 @@
   --shadow:  0 4px 24px rgba(0,0,0,0.07);
   --shadow-h:0 16px 48px rgba(0,0,0,0.14);
   --nav-h:   68px;
+  /* Always-inverted surface: used for decorative sections/controls that are
+     intentionally dark-on-light-theme regardless of the active theme (footer,
+     "how it works" band, marquee, dark-chip hover states). Kept separate from
+     --ink (which is the theme-reactive text/foreground color) so flipping the
+     site into dark mode can't turn these surfaces light. */
+  --ink-solid: #1a1714;
 }
 
 /* ---- RESET ---- */
@@ -97,7 +103,7 @@ nav.scrolled {
   transition: background 0.2s, transform 0.2s !important;
 }
 .nav-cta::after { display: none !important; }
-.nav-cta:hover { background: var(--ink) !important; transform: translateY(-2px); }
+.nav-cta:hover { background: var(--ink-solid) !important; transform: translateY(-2px); }
 
 /* Hamburger — hidden on desktop */
 .hamburger {
@@ -337,7 +343,7 @@ h1 .h-outline { -webkit-text-stroke: 2px var(--ink); color: transparent; }
    MARQUEE
    ============================================================ */
 .marquee-wrap {
-  background: var(--ink);
+  background: var(--ink-solid);
   border-top: 3px solid var(--accent);
   border-bottom: 3px solid var(--accent);
   padding: 0.9rem 0; overflow: hidden;
@@ -390,7 +396,7 @@ section { padding: 5.5rem 2.5rem; }
   border-radius: 4px; letter-spacing: 0.3px;
   transition: background 0.25s, transform 0.25s;
 }
-.btn-primary:hover { background: var(--ink); border-color: var(--ink); transform: translateY(-2px); }
+.btn-primary:hover { background: var(--ink-solid); border-color: var(--ink-solid); transform: translateY(-2px); }
 
 .btn-outline {
   display: inline-flex; align-items: center;
@@ -401,7 +407,7 @@ section { padding: 5.5rem 2.5rem; }
   border-radius: 4px; letter-spacing: 0.3px;
   transition: background 0.25s, color 0.25s;
 }
-.btn-outline:hover { background: var(--ink); color: #fff; }
+.btn-outline:hover { background: var(--ink); color: var(--bg); }
 .btn-outline.sm { padding: 0.55rem 1.1rem; font-size: 0.78rem; }
 
 .btn-wa {
@@ -472,7 +478,7 @@ section { padding: 5.5rem 2.5rem; }
    HOW IT WORKS
    ============================================================ */
 #how {
-  background: var(--ink);
+  background: var(--ink-solid);
   position: relative; overflow: hidden;
 }
 #how::before {
@@ -646,7 +652,7 @@ section { padding: 5.5rem 2.5rem; }
 /* ============================================================
    FOOTER
    ============================================================ */
-footer { background: var(--ink); color: #fff; padding: 5rem 2.5rem 2rem; }
+footer { background: var(--ink-solid); color: #fff; padding: 5rem 2.5rem 2rem; }
 .footer-grid {
   display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 3rem;
   padding-bottom: 3rem; border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -2145,9 +2151,77 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 [data-theme="dark"] .h-outline { -webkit-text-stroke-color: var(--ink); }
 [data-theme="dark"] .h-outline-y { -webkit-text-stroke-color: var(--accent2); }
 
-/* Product detail modal / lightboxes use hardcoded light colors in the
-   base stylesheet — override them explicitly for dark mode so the
-   modal doesn't stay stuck in a bright white card. */
+/* ---- Product cards / testimonial cards ----
+   Base stylesheet hardcodes these surfaces to #fff instead of var(--bg2),
+   so in dark mode the card stayed white while var(--ink) text turned
+   near-white too — invisible text on an unchanged light card. */
+[data-theme="dark"] .product-card,
+[data-theme="dark"] .pc-img-wrap,
+[data-theme="dark"] .testi-card {
+  background: var(--bg2);
+}
+
+/* ---- Category filter chips ----
+   Entirely hardcoded to the light palette in the base stylesheet. */
+[data-theme="dark"] .cat-card {
+  background: var(--bg2); border-color: var(--border);
+}
+[data-theme="dark"] .cat-card.active { background: var(--bg3); }
+[data-theme="dark"] .cat-img-wrap { background: var(--bg3); }
+[data-theme="dark"] .cat-name { color: var(--ink); }
+
+/* ---- Search bar + filter panel ----
+   Entirely hardcoded to the light palette in the base stylesheet. */
+[data-theme="dark"] .search-bar-input,
+[data-theme="dark"] .filter-toggle-btn,
+[data-theme="dark"] .price-preset-btn {
+  background: var(--bg2); border-color: var(--border); color: var(--ink);
+}
+[data-theme="dark"] .filter-panel-inner {
+  background: var(--bg3); border-color: var(--border);
+}
+[data-theme="dark"] .filter-panel-title { color: var(--ink); }
+[data-theme="dark"] .price-slider-label { color: var(--ink2); }
+[data-theme="dark"] .price-slider,
+[data-theme="dark"] .price-slider::-webkit-slider-thumb,
+[data-theme="dark"] .price-slider::-moz-range-thumb {
+  border-color: var(--bg2);
+}
+[data-theme="dark"] .price-slider { background: var(--border); }
+
+/* ---- Product skeleton / testimonial skeleton loaders ---- */
+[data-theme="dark"] .product-skeleton,
+[data-theme="dark"] .testi-skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
+  background-size: 800px 100%;
+}
+
+/* ---- Toast ---- */
+[data-theme="dark"] .toast { background: var(--bg3); color: var(--ink); }
+
+/* ---- Cart drawer + media lightbox ----
+   Base stylesheet hardcodes these panels to #fff. */
+[data-theme="dark"] #cart-drawer,
+[data-theme="dark"] .media-lightbox-box {
+  background: var(--bg2);
+}
+
+/* ---- Delivery details form (inside cart / quick-order flow) ----
+   Entirely hardcoded to the light palette in the base stylesheet. */
+[data-theme="dark"] .pm-delivery-form {
+  background: var(--bg3); border-color: var(--border);
+}
+[data-theme="dark"] .pm-delivery-input {
+  background: var(--bg2); border-color: var(--border); color: var(--ink);
+}
+[data-theme="dark"] .ci-qty button {
+  background: var(--bg3); border-color: var(--border); color: var(--ink);
+}
+
+/* ---- Quick-order modal / direct-purchase modal / product detail modal ----
+   All three use hardcoded light-only colors in the base stylesheet —
+   override them explicitly for dark mode so they don't stay stuck as
+   bright white cards with unreadable text. */
 [data-theme="dark"] .pm-dtl-box,
 [data-theme="dark"] .pm-modal-box,
 [data-theme="dark"] .pm-dp-box {
@@ -2158,13 +2232,39 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 [data-theme="dark"] .pm-modal-product {
   color: var(--ink);
 }
-[data-theme="dark"] .pm-dtl-desc { color: var(--ink2); }
-[data-theme="dark"] .pm-dtl-size-chip {
+[data-theme="dark"] .pm-dtl-desc,
+[data-theme="dark"] .pm-modal-desc,
+[data-theme="dark"] .pm-dtl-price-tag,
+[data-theme="dark"] .pm-dp-sub {
+  color: var(--ink2);
+}
+[data-theme="dark"] .pm-dtl-size-chip,
+[data-theme="dark"] .pm-dtl-side-chip {
   background: var(--bg3); border-color: var(--border); color: var(--ink);
 }
+[data-theme="dark"] .pm-dtl-size-hint { color: var(--muted); }
+/* .pm-dtl-close floats over the product photo/media area (not the card
+   surface), so it intentionally stays a fixed light circle in both
+   themes for contrast against the image — no override needed. */
+[data-theme="dark"] .pm-modal-close {
+  background: var(--bg3); color: var(--ink2);
+}
+[data-theme="dark"] .pm-btn-email {
+  background: var(--bg3); border-color: var(--border); color: var(--ink);
+}
+[data-theme="dark"] .pm-btn-email:hover {
+  background: var(--ink); color: var(--bg);
+  border-color: var(--ink);
+}
+[data-theme="dark"] .pm-modal-or::before { background: var(--border); }
+[data-theme="dark"] .pm-modal-or span { background: var(--bg2); color: var(--ink2); }
 [data-theme="dark"] .pm-dp-input {
   background: var(--bg3); border-color: var(--border); color: var(--ink);
 }
+[data-theme="dark"] .pm-dp-cancel {
+  background: var(--bg3); border-color: var(--border); color: var(--ink2);
+}
+[data-theme="dark"] .pm-dp-cancel:hover { background: var(--border); }
 
 /* Reviews page uses its own hardcoded --rv-* light palette — remap
    those variables too so reviews.html follows the same toggle. */
@@ -2179,3 +2279,4 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 [data-theme="dark"] .add-review-section {
   background: var(--rv-surface); border-color: var(--rv-border);
 }
+[data-theme="dark"] .reviews-page-hero { background: var(--rv-bg); }
