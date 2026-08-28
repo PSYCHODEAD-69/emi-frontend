@@ -350,6 +350,7 @@ h1 .h-outline { -webkit-text-stroke: 2px var(--ink); color: transparent; }
 }
 .marquee-track {
   display: flex; gap: 2rem; white-space: nowrap;
+  width: max-content;
   animation: marqueeScroll 20s linear infinite;
 }
 .marquee-track:hover { animation-play-state: paused; }
