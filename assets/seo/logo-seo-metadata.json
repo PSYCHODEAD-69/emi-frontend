@@ -1,0 +1,22 @@
+{
+  "brand": "ElectroMotive Inventory",
+  "logo_alt_text": "ElectroMotive Inventory logo - EV battery and parts inventory management platform",
+  "schema_org_organization_logo": {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "ElectroMotive Inventory",
+    "logo": "https://YOUR-DOMAIN.com/assets/logo/electromotive-inventory-logo-transparent-512w.png"
+  },
+  "html_head_tags": {
+    "favicon": "<link rel=\"icon\" type=\"image/x-icon\" href=\"/assets/favicon/electromotive-inventory-favicon.ico\">",
+    "favicon_32": "<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/assets/favicon/electromotive-inventory-favicon-32x32.png\">",
+    "favicon_16": "<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/assets/favicon/electromotive-inventory-favicon-16x16.png\">",
+    "apple_touch_icon": "<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/assets/icons/electromotive-inventory-icon-180x180.png\">",
+    "manifest": "<link rel=\"manifest\" href=\"/assets/manifest.json\">",
+    "og_image": "<meta property=\"og:image\" content=\"https://YOUR-DOMAIN.com/assets/social/electromotive-inventory-og-image-1200x630.png\">",
+    "og_image_alt": "<meta property=\"og:image:alt\" content=\"ElectroMotive Inventory logo\">",
+    "twitter_card": "<meta name=\"twitter:card\" content=\"summary_large_image\">",
+    "twitter_image": "<meta name=\"twitter:image\" content=\"https://YOUR-DOMAIN.com/assets/social/electromotive-inventory-twitter-card-1200x675.png\">"
+  },
+  "filename_convention_note": "All files are pre-named with the brand keyword 'electromotive-inventory' plus a descriptive term and exact pixel dimensions. Search engines weigh descriptive, hyphenated filenames and matching alt text heavily for image search ranking - never rename these to generic names like 'logo1.png'."
+}
