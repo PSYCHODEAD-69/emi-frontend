@@ -1476,12 +1476,31 @@ async function deleteCategoryUI(id, label, count) {
 let productForms = [];
 
 function addProductForm() {
+  captureProductFormValues();
   const idx = productForms.length;
   productForms.push({ id: idx });
   renderProductForms();
 }
 
+// Reads whatever is currently typed into each existing product form's
+// DOM inputs and stashes it on the matching productForms[i] entry, so
+// that re-rendering (innerHTML replace) doesn't wipe out what the user
+// already typed for earlier products.
+function captureProductFormValues() {
+  productForms.forEach((f, i) => {
+    const nameEl = document.getElementById(`pf-name-${i}`);
+    if (!nameEl) return; // form for this index isn't rendered yet
+    f.name = nameEl.value;
+    f.price = document.getElementById(`pf-price-${i}`)?.value ?? '';
+    f.desc = document.getElementById(`pf-desc-${i}`)?.value ?? '';
+    f.cat = document.getElementById(`pf-cat-${i}`)?.value ?? '';
+    f.badge = document.getElementById(`pf-badge-${i}`)?.value ?? '';
+    f.stock = document.getElementById(`pf-stock-${i}`)?.value ?? 'true';
+  });
+}
+
 function removeProductForm(idx) {
+  captureProductFormValues();
   productForms.splice(idx, 1);
 
   // Re-index mediaStore 'add:N' keys to match the new form order
@@ -1509,39 +1528,39 @@ function removeProductForm(idx) {
 
 function renderProductForms() {
   const wrap = document.getElementById('productFormsWrap');
-  wrap.innerHTML = productForms.map((_, i) => `
+  wrap.innerHTML = productForms.map((f, i) => `
     <div class="product-form-block" id="pfb-${i}">
       <span class="pfb-num">Product ${i + 1}</span>
       ${productForms.length > 1 ? `<button class="pfb-remove" onclick="removeProductForm(${i})">✕</button>` : ''}
 
       <div class="form-row" style="margin-top:.5rem;">
         <div class="form-group"><label>Product Name *</label>
-          <input type="text" class="adm-input" id="pf-name-${i}" placeholder="e.g. Custom Ceramic Mug"/>
+          <input type="text" class="adm-input" id="pf-name-${i}" placeholder="e.g. Custom Ceramic Mug" value="${escHtml(f.name || '')}"/>
         </div>
         <div class="form-group"><label>Price *</label>
-          <input type="text" class="adm-input" id="pf-price-${i}" placeholder="Rs.249"/>
+          <input type="text" class="adm-input" id="pf-price-${i}" placeholder="Rs.249" value="${escHtml(f.price || '')}"/>
         </div>
       </div>
       <div class="form-row single">
         <div class="form-group"><label>Description</label>
-          <textarea class="adm-input" id="pf-desc-${i}" placeholder="Product description..." rows="2"></textarea>
+          <textarea class="adm-input" id="pf-desc-${i}" placeholder="Product description..." rows="2">${escHtml(f.desc || '')}</textarea>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Category</label>
           <select class="adm-select" id="pf-cat-${i}">
-            ${categoryOptionsHtml()}
+            ${categoryOptionsHtml(f.cat)}
           </select>
         </div>
         <div class="form-group"><label>Badge (optional)</label>
-          <input type="text" class="adm-input" id="pf-badge-${i}" placeholder="POPULAR / NEW / BESTSELLER"/>
+          <input type="text" class="adm-input" id="pf-badge-${i}" placeholder="POPULAR / NEW / BESTSELLER" value="${escHtml(f.badge || '')}"/>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Availability</label>
           <select class="adm-select" id="pf-stock-${i}">
-            <option value="true">In Stock</option>
-            <option value="false">Out of Stock</option>
+            <option value="true" ${f.stock !== 'false' ? 'selected' : ''}>In Stock</option>
+            <option value="false" ${f.stock === 'false' ? 'selected' : ''}>Out of Stock</option>
           </select>
         </div>
       </div>
