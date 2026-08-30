@@ -63,6 +63,12 @@
       border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 380px;
     }
     .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+    /* Admin defaults to a dark login surface, so show the white-icon
+       variant by default and switch to the navy one only in light mode. */
+    .login-logo-light { display: none; }
+    .login-logo-dark  { display: inline-block; }
+    [data-theme="light"] .login-logo-light { display: inline-block; }
+    [data-theme="light"] .login-logo-dark  { display: none; }
     .login-logo-text { font-family: var(--font-display); font-size: 1.5rem; }
     .login-logo-text em { color: var(--accent); font-style: normal; }
     .login-tag { font-size: .78rem; color: var(--muted); background: var(--surface2); padding: 4px 10px; border-radius: 20px; }
@@ -569,7 +575,8 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <div class="login-logo">
-      <img src="assets/icons/electromotive-inventory-icon-128x128.png" alt="ElectroMotive Inventory logo - EV battery and parts inventory management platform" width="40" height="40" style="border-radius:8px;">
+      <img src="assets/icons/electromotive-inventory-icon-128x128.png" alt="ElectroMotive Inventory logo - EV battery and parts inventory management platform" width="40" height="40" style="border-radius:8px;" class="login-logo-img login-logo-light">
+      <img src="assets/icons-light/electromotive-inventory-icon-light-128x128.png" alt="ElectroMotive Inventory logo - EV battery and parts inventory management platform" width="40" height="40" style="border-radius:8px;" class="login-logo-img login-logo-dark">
       <div>
         <div class="login-logo-text">Electromotive <em>Inventory</em></div>
       </div>
