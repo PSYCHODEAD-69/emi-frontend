@@ -31,11 +31,12 @@ let priceFilter       = null; // { min, max } or null for no filter
    NaN or a broken layout.
    ══════════════════════════════════════ */
 
-/* Indian-locale currency formatting: ₹1,499 / ₹12,999 / ₹1,00,000 */
+/* Indian-locale currency formatting, matching PrintMotive's style:
+   Rs.379 / Rs.1,499 / Rs.1,00,000 */
 function formatINR(amount) {
   const n = Number(amount);
-  if (!Number.isFinite(n) || n < 0) return "₹0";
-  return "₹" + n.toLocaleString("en-IN");
+  if (!Number.isFinite(n) || n < 0) return "Rs.0";
+  return "Rs." + n.toLocaleString("en-IN");
 }
 
 /* True only when a product has a real, positive discount. */
@@ -486,7 +487,7 @@ function handlePriceSliderInput(value) {
 
 function updatePriceSliderLabel(value) {
   const label = document.getElementById("priceSliderValue");
-  if (label) label.textContent = `Up to ₹${Number(value)}`;
+  if (label) label.textContent = `Up to Rs.${Number(value)}`;
 }
 
 function applyPriceSliderRange(value) {
@@ -1223,7 +1224,7 @@ function addToCart(el, model) {
   const price    = el.dataset.price;
   const desc     = el.dataset.desc;
   const priceNum = parseInt(String(price).replace(/[^0-9]/g, "")) || 0;
-  const priceDisplay = formatINR(priceNum); // e.g. "₹1,499" — consistent with product cards
+  const priceDisplay = formatINR(priceNum); // e.g. "Rs.1,499" — consistent with product cards
   model = model || null;
 
   const existing = cart.find(i => i.product === product && (i.model || null) === model);
