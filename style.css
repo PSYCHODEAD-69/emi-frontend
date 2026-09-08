@@ -2248,6 +2248,14 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 [data-theme="dark"] .pm-dtl-side-chip {
   background: var(--bg3); border-color: var(--border); color: var(--ink);
 }
+/* Selected chip must stay visibly highlighted in dark mode too — without
+   this override, the rule above (same specificity, later in source order)
+   silently wins over the base .pm-dtl-size-chip.active orange background,
+   making selected vs unselected model look identical in dark theme. */
+[data-theme="dark"] .pm-dtl-size-chip.active,
+[data-theme="dark"] .pm-dtl-side-chip.active {
+  background: #ff4d2e; border-color: #ff4d2e; color: #fff;
+}
 [data-theme="dark"] .pm-dtl-size-hint { color: var(--muted); }
 /* .pm-dtl-close floats over the product photo/media area (not the card
    surface), so it intentionally stays a fixed light circle in both
