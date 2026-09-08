@@ -21,6 +21,224 @@ let currentCategory = "all";
 let searchQuery      = "";
 let priceFilter       = null; // { min, max } or null for no filter
 
+/* ══════════════════════════════════════
+   PRICING HELPERS
+   Single source of truth for discount math + currency formatting,
+   reused by product cards, product detail, and anywhere else pricing
+   is shown. Backend already computes/validates discountPercent, but
+   these helpers stay defensive so a stale-cached or legacy product
+   (only "startingPrice"/"price", no originalPriceNum) never renders
+   NaN or a broken layout.
+   ══════════════════════════════════════ */
+
+/* Indian-locale currency formatting: ₹1,499 / ₹12,999 / ₹1,00,000 */
+function formatINR(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n < 0) return "₹0";
+  return "₹" + n.toLocaleString("en-IN");
+}
+
+/* True only when a product has a real, positive discount. */
+function hasDiscount(p) {
+  const orig = Number(p.originalPriceNum ?? p.priceNum ?? 0);
+  const disc = Number(p.discountedPriceNum ?? 0);
+  return orig > 0 && disc > 0 && disc < orig;
+}
+
+/* Returns an integer 0-99. Recomputed client-side as a safety net —
+   never trusts a stray/stale discountPercent value blindly if the
+   underlying prices don't actually support it. */
+function discountPercent(p) {
+  if (!hasDiscount(p)) return 0;
+  const orig = Number(p.originalPriceNum ?? p.priceNum ?? 0);
+  const disc = Number(p.discountedPriceNum ?? 0);
+  const pct = Math.round(((orig - disc) / orig) * 100);
+  return Number.isFinite(pct) && pct > 0 ? Math.min(99, pct) : 0;
+}
+
+/* The price the customer actually pays right now. */
+function effectivePrice(p) {
+  if (hasDiscount(p)) return Number(p.discountedPriceNum);
+  return Number(p.originalPriceNum ?? p.priceNum ?? 0);
+}
+
+/* Builds the price block markup: struck-through original + bold sale
+   price when discounted, or just the plain price otherwise. Shared by
+   product cards and the product detail page so pricing never diverges
+   between the two. */
+function renderPriceBlock(p) {
+  if (hasDiscount(p)) {
+    return `
+      <span class="pc-price-strike">${formatINR(p.originalPriceNum)}</span>
+      <span class="pc-price">${formatINR(p.discountedPriceNum)}</span>
+    `;
+  }
+  const price = p.originalPriceNum ?? p.priceNum ?? 0;
+  return `<span class="pc-price">${formatINR(price)}</span>`;
+}
+
+/* Discount badge — only rendered when there's a genuine discount.
+   Never shows 0% OFF or a fabricated percentage. */
+function renderDiscountBadgeHtml(p) {
+  const pct = discountPercent(p);
+  if (!pct) return "";
+  return `<div class="pc-badge-off">${pct}% OFF</div>`;
+}
+
+/* ══════════════════════════════════════
+   OFFER BANNERS
+   Adapted from the PrintMotive reference implementation: same data
+   model (desktopUrl/mobileUrl per banner), same auto-slide carousel
+   behavior, same "hide section entirely when empty" approach so an
+   empty banner list never reserves layout space. Reuses EMI's
+   existing media lightbox overlay for the zoomed click-through view.
+   ══════════════════════════════════════ */
+let offerBanners        = [];
+let offerBannerIndex    = 0;
+let offerBannerTimer    = null;
+const OFFER_SLIDE_DELAY = 2500; // ms
+const OFFER_MOBILE_BREAKPOINT = 760; // px — matches EMI's mobile CSS breakpoint
+
+function isOfferMobileView() {
+  return window.innerWidth <= OFFER_MOBILE_BREAKPOINT;
+}
+
+/* Picks the right image for the current screen size, falling back to
+   whichever image exists if only one was uploaded for this banner. */
+function offerBannerImageFor(b) {
+  const useMobile = isOfferMobileView();
+  if (useMobile) return b.mobileUrl || b.desktopUrl || "";
+  return b.desktopUrl || b.mobileUrl || "";
+}
+
+async function loadOfferBanners() {
+  const section = document.getElementById("offerBanner");
+  if (!section) return;
+
+  try {
+    const res     = await fetch(`${EMI_API}/api/banners`);
+    const banners = await res.json();
+    offerBanners  = Array.isArray(banners) ? banners : [];
+
+    if (!offerBanners.length) {
+      section.style.display = "none";
+      section.innerHTML = ""; // fully empty — no reserved space
+      return;
+    }
+
+    // Section was possibly emptied by a prior no-banner state; restore markup
+    if (!document.getElementById("offerBannerTrack")) {
+      section.innerHTML = `
+        <div class="offer-banner-slider" id="offerBannerSlider">
+          <div class="offer-banner-track" id="offerBannerTrack"></div>
+          <button class="offer-banner-nav offer-banner-prev" type="button" onclick="changeOfferBanner(-1)" aria-label="Previous offer">&#10094;</button>
+          <button class="offer-banner-nav offer-banner-next" type="button" onclick="changeOfferBanner(1)" aria-label="Next offer">&#10095;</button>
+          <div class="offer-banner-dots" id="offerBannerDots"></div>
+        </div>
+      `;
+    }
+
+    section.style.display = "block";
+    offerBannerIndex = 0;
+    renderOfferBanners();
+    startOfferAutoSlide();
+  } catch (err) {
+    console.error("Failed to load offer banners:", err);
+    section.style.display = "none";
+    section.innerHTML = "";
+  }
+}
+
+function renderOfferBanners() {
+  const track = document.getElementById("offerBannerTrack");
+  const dots  = document.getElementById("offerBannerDots");
+  if (!track) return;
+
+  track.innerHTML = offerBanners.map((b, i) => `
+    <div class="offer-banner-slide ${i === offerBannerIndex ? "active" : ""}">
+      <img src="${escapeHtml(offerBannerImageFor(b))}" alt="Offer" loading="${i === 0 ? "eager" : "lazy"}"
+           onerror="this.closest('.offer-banner-slide').style.display='none'"
+           onclick="openOfferBannerLightbox(${i})"/>
+    </div>
+  `).join("");
+
+  if (dots) {
+    dots.innerHTML = offerBanners.length > 1
+      ? offerBanners.map((_, i) => `<span class="offer-banner-dot ${i === offerBannerIndex ? "active" : ""}" onclick="goToOfferBanner(${i})"></span>`).join("")
+      : "";
+  }
+
+  // Hide nav arrows entirely when there's nothing to navigate between
+  const slider = document.getElementById("offerBannerSlider");
+  if (slider) slider.classList.toggle("offer-single", offerBanners.length <= 1);
+  const prevBtn = document.getElementById("offerBannerPrev");
+  const nextBtn = document.getElementById("offerBannerNext");
+  if (prevBtn) prevBtn.style.display = offerBanners.length > 1 ? "" : "none";
+  if (nextBtn) nextBtn.style.display = offerBanners.length > 1 ? "" : "none";
+}
+
+function changeOfferBanner(direction) {
+  if (!offerBanners.length) return;
+  offerBannerIndex = (offerBannerIndex + direction + offerBanners.length) % offerBanners.length;
+  renderOfferBanners();
+  restartOfferAutoSlide(); // manual interaction resets the auto-slide timer
+}
+
+function goToOfferBanner(index) {
+  if (!offerBanners.length) return;
+  offerBannerIndex = index;
+  renderOfferBanners();
+  restartOfferAutoSlide();
+}
+
+function startOfferAutoSlide() {
+  stopOfferAutoSlide();
+  if (offerBanners.length <= 1) return;
+  offerBannerTimer = setInterval(() => {
+    offerBannerIndex = (offerBannerIndex + 1) % offerBanners.length;
+    renderOfferBanners();
+  }, OFFER_SLIDE_DELAY);
+}
+
+function stopOfferAutoSlide() {
+  if (offerBannerTimer) { clearInterval(offerBannerTimer); offerBannerTimer = null; }
+}
+
+function restartOfferAutoSlide() {
+  stopOfferAutoSlide();
+  startOfferAutoSlide();
+}
+
+// Re-render on resize so crossing the mobile/desktop breakpoint swaps
+// images immediately, without needing a page reload. Debounced.
+let offerBannerResizeTimer = null;
+window.addEventListener("resize", () => {
+  if (!offerBanners.length) return;
+  clearTimeout(offerBannerResizeTimer);
+  offerBannerResizeTimer = setTimeout(renderOfferBanners, 200);
+});
+
+/* Reuses EMI's existing media lightbox overlay (same one used for
+   product images/videos) for a zoomed, no-redirect banner view. */
+function openOfferBannerLightbox(index) {
+  const b = offerBanners[index];
+  if (!b) return;
+
+  const url = offerBannerImageFor(b);
+  if (!url) return;
+
+  const content = document.getElementById("mediaLightboxContent");
+  const nav     = document.getElementById("mediaLightboxNav");
+  if (!content) return;
+
+  content.innerHTML = `<img src="${escapeHtml(url)}" alt="Offer"/>`;
+  if (nav) nav.style.display = "none"; // single image — no prev/next needed
+
+  const overlay = document.getElementById("mediaLightboxOverlay");
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
 async function loadProducts() {
   try {
     const [prodRes, catRes, modelRes] = await Promise.all([
@@ -91,10 +309,10 @@ function renderProducts(products) {
     );
   }
 
-  // Price filter: uses priceNum (numeric price stored by the backend)
+  // Price filter: uses the effective (discounted, if any) price
   if (priceFilter) {
     filtered = filtered.filter(p => {
-      const price = p.priceNum ?? (parseInt(String(p.price || "0").replace(/[^0-9]/g, "")) || 0);
+      const price = effectivePrice(p);
       const aboveMin = priceFilter.min == null || price >= priceFilter.min;
       const belowMax = priceFilter.max == null || price <= priceFilter.max;
       return aboveMin && belowMax;
@@ -113,6 +331,7 @@ function renderProducts(products) {
       ${p.badge ? `<div class="pc-badge">${p.badge}</div>` : ""}
       ${p.inStock === false ? `<div class="pc-badge-oos">Out of Stock</div>` : ""}
       <div class="pc-img-wrap">
+       ${renderDiscountBadgeHtml(p)}
        <div class="pc-media-carousel" data-product-id="${escapeHtml(p.id)}" data-media='${escapeHtml(JSON.stringify(
          Array.isArray(p.media) && p.media.length
            ? p.media
@@ -171,13 +390,12 @@ function renderProducts(products) {
         ${p.description ? `<div class="pc-desc">${escapeHtml(p.description)}</div>` : ""}
         ${Array.isArray(p.models) && p.models.length ? `<div class="pc-models">${p.models.map(mid => `<span class="pc-model-tag">${escapeHtml(modelLabel(mid))}</span>`).join("")}</div>` : ""}
         <div class="pc-price-row">
-          <span class="pc-price">${escapeHtml(p.price)}</span>
-          <span class="pc-price-tag">Starting price</span>
+          ${renderPriceBlock(p)}
         </div>
         <div class="pc-btns">
           <button class="pc-btn-cart"
             data-product="${escapeHtml(p.name)}"
-            data-price="${escapeHtml(p.price)}"
+            data-price="${effectivePrice(p)}"
             data-desc="${escapeHtml(p.description || p.name)}"
             data-id="${escapeHtml(p.id)}"
             ${p.inStock === false ? "disabled" : ""}
@@ -187,7 +405,7 @@ function renderProducts(products) {
           </button>
           <button class="pc-btn-order"
             data-product="${escapeHtml(p.name)}"
-            data-price="${escapeHtml(p.price)}"
+            data-price="${effectivePrice(p)}"
             data-desc="${escapeHtml(p.description || p.name)}"
             data-id="${escapeHtml(p.id)}"
             ${p.inStock === false ? "disabled" : ""}
@@ -556,7 +774,8 @@ function buildGeneralWALink() {
    ══════════════════════════════════════ */
 function orderProduct(el, model) {
   const product = el.dataset.product || "Spare Part";
-  const price   = el.dataset.price   || "Contact for pricing";
+  const rawPrice = el.dataset.price;
+  const price   = rawPrice ? formatINR(rawPrice) : "Contact for pricing";
   const desc    = el.dataset.desc    || "Spare part order";
   addRipple(el);
   showDeliveryPopup(buildWALink(product, price, desc, model || null), product, price, false, model || null);
@@ -613,7 +832,11 @@ function openProductDetail(productId, evt) {
       <div class="pm-dtl-info">
         <div class="pm-dtl-cat">${escapeHtml(categoryLabel(p.category))}</div>
         <div class="pm-dtl-name">${escapeHtml(p.name)}</div>
-        <div class="pm-dtl-price">${escapeHtml(p.price)} <span class="pm-dtl-price-tag">Starting price</span></div>
+        <div class="pm-dtl-price">
+          ${hasDiscount(p)
+            ? `<span class="pc-price-strike">${formatINR(p.originalPriceNum)}</span> <span class="pc-price">${formatINR(p.discountedPriceNum)}</span> <span class="pc-badge-off pc-badge-off-inline">${discountPercent(p)}% OFF</span>`
+            : `<span class="pc-price">${formatINR(p.originalPriceNum ?? p.priceNum ?? 0)}</span>`}
+        </div>
         ${p.inStock === false ? `<div class="pm-dtl-oos-badge">Out of Stock</div>` : ""}
         ${p.description ? `<p class="pm-dtl-desc">${escapeHtml(p.description)}</p>` : ""}
 
@@ -629,12 +852,12 @@ function openProductDetail(productId, evt) {
 
         <div class="pm-dtl-btns">
           <button class="pc-btn-cart pm-dtl-btn-cart" id="pmDtlAddCart" ${(hasModels || p.inStock === false) ? "disabled" : ""}
-            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
+            data-product="${escapeHtml(p.name)}" data-price="${effectivePrice(p)}" data-desc="${escapeHtml(p.description || p.name)}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             ${p.inStock === false ? "Out of Stock" : "Add to Cart"}
           </button>
           <button class="pc-btn-order pm-dtl-btn-order" id="pmDtlOrderNow" ${(hasModels || p.inStock === false) ? "disabled" : ""}
-            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
+            data-product="${escapeHtml(p.name)}" data-price="${effectivePrice(p)}" data-desc="${escapeHtml(p.description || p.name)}">
             Order Now
           </button>
         </div>
@@ -999,14 +1222,15 @@ function addToCart(el, model) {
   const product  = el.dataset.product;
   const price    = el.dataset.price;
   const desc     = el.dataset.desc;
-  const priceNum = parseInt(price.replace(/[^0-9]/g, "")) || 0;
+  const priceNum = parseInt(String(price).replace(/[^0-9]/g, "")) || 0;
+  const priceDisplay = formatINR(priceNum); // e.g. "₹1,499" — consistent with product cards
   model = model || null;
 
   const existing = cart.find(i => i.product === product && (i.model || null) === model);
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ product, price, priceNum, desc, model, qty: 1 });
+    cart.push({ product, price: priceDisplay, priceNum, desc, model, qty: 1 });
   }
   saveCart();
   updateCartBadge();
@@ -1044,14 +1268,14 @@ function renderCartItems() {
 
   const grandTotal = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
   if (footerEl) footerEl.style.display = "block";
-  if (totalEl)  totalEl.textContent = `Rs.${grandTotal}`;
+  if (totalEl)  totalEl.textContent = formatINR(grandTotal);
 
   itemsEl.innerHTML = cart.map((item, idx) => `
     <div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">${escapeHtml(item.product)}${item.model ? ` <span class="ci-size">— Model: ${escapeHtml(modelLabel(item.model))}</span>` : ""}</div>
         <div class="ci-price">${escapeHtml(item.price)} each &nbsp;·&nbsp;
-          <span class="ci-subtotal">Rs.${item.priceNum * item.qty}</span>
+          <span class="ci-subtotal">${formatINR(item.priceNum * item.qty)}</span>
         </div>
       </div>
       <div class="ci-qty">
@@ -1279,6 +1503,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadProducts();
   loadFeaturedReviews();
+  loadOfferBanners();
 
   console.log("%cElectromotive Inventory loaded!", "color:#0ea86b;font-weight:bold;font-size:14px");
 });
