@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI — Fix Legacy Model Links (one-time)</title>
+<style>
+:root{
+--bg:#0d0d0d; --panel:#161616; --border:#2a2a2a; --text:#eee; --muted:#999;
+--green:#22c55e; --green-dark:#16a34a; --red:#ef4444; --gold:#c9a227;
+}
+*{box-sizing:border-box;}
+body{
+background:var(--bg); color:var(--text); font-family:Arial, Helvetica, sans-serif;
+margin:0; padding:24px 16px 80px; max-width:760px; margin-inline:auto;
+}
+h1{font-family:Georgia, 'Times New Roman', serif; font-size:26px; margin:0 0 4px;}
+p.sub{color:var(--muted); margin:0 0 24px; font-size:14px;}
+.panel{
+background:var(--panel); border:1px solid var(--border); border-radius:10px;
+padding:18px; margin-bottom:18px;
+}
+.panel h2{font-size:15px; margin:0 0 12px; font-family:Georgia, serif;}
+label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
+input[type=text], input[type=password]{
+width:100%; background:#0f0f0f; border:1px solid var(--border); color:var(--text);
+padding:10px 12px; border-radius:6px; font-size:14px; margin-bottom:12px;
+}
+input:focus{outline:1px solid var(--gold);}
+button{
+background:var(--green); color:#04140a; font-weight:bold; border:none;
+padding:12px 18px; border-radius:6px; cursor:pointer; font-size:14px;
+transition:background .15s;
+}
+button:hover{background:var(--green-dark);}
+button:disabled{background:#3a3a3a; color:#777; cursor:not-allowed;}
+button.secondary{background:transparent; border:1px solid var(--border); color:var(--text);}
+button.secondary:hover{background:#222;}
+button.danger{background:var(--red); color:#fff;}
+button.danger:hover{background:#c73030;}
+#log{
+background:#0a0a0a; border:1px solid var(--border); border-radius:6px;
+padding:12px; font-family:'Courier New', monospace; font-size:12.5px;
+max-height:420px; overflow-y:auto; white-space:pre-wrap; line-height:1.6;
+}
+.row{display:flex; gap:12px; flex-wrap:wrap;}
+.ok{color:var(--green);}
+.err{color:var(--red);}
+.info{color:#7fb3ff;}
+.warn{color:var(--gold);}
+.badge{
+display:inline-block; background:#1c1c1c; border:1px solid var(--border);
+padding:2px 8px; border-radius:20px; font-size:11px; color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<h1>EMI — Fix Legacy Model Links</h1>
+<p class="sub">One-time tool for products that were bulk-imported straight into KV (via migrate.html) before the admin
+panel's model picker existed. Those products may have their compatible models stored as plain text
+(e.g. <span class="badge">Ola S1 Pro</span>) instead of linked to the actual model in the models list
+(e.g. <span class="badge">ola-s1-pro</span>) — which is why deleting/removing a model from a product doesn't work,
+and re-adding one from the admin panel appears to duplicate it instead of replacing it.
+This matches the old text values against your current models list by name and relinks them.
+<strong>Delete this file once you've run it successfully — it's not meant to stay in the repo.</strong></p>
+
+<div class="panel">
+<h2>1. Connection</h2>
+<label for="apiBase">Worker API base URL</label>
+<input type="text" id="apiBase" placeholder="https://your-worker.your-subdomain.workers.dev">
+<label for="username">Admin username</label>
+<input type="text" id="username" autocomplete="off">
+<label for="password">Admin password</label>
+<input type="password" id="password" autocomplete="off">
+<button id="loginBtn">Login</button>
+<span id="loginStatus" style="margin-left:10px; font-size:13px;"></span>
+</div>
+
+<div class="panel">
+<h2>2. Preview (dry run — makes no changes)</h2>
+<p class="sub" style="margin-bottom:10px;">Shows what would be changed without touching any data. Always run this first.</p>
+<button id="previewBtn" class="secondary" disabled>Preview changes</button>
+<div id="previewResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="panel">
+<h2>3. Apply fix</h2>
+<p class="sub" style="margin-bottom:10px;">
+Relinks every product's model text to the correct model in your list. Values that don't match any current
+model name are left unlinked and reported in the log — nothing is guessed. Safe to run more than once;
+products that already link correctly are left untouched.
+</p>
+<button id="applyBtn" class="danger" disabled>Apply fix to live data</button>
+</div>
+
+<div class="panel">
+<h2>Log</h2>
+<div id="log">Waiting for login…</div>
+</div>
+
+<script>
+let TOKEN = null;
+const logEl = document.getElementById("log");
+
+function log(msg, cls){
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog(){ logEl.innerHTML = ""; }
+function apiBase(){
+  return document.getElementById("apiBase").value.trim().replace(/\/+$/, "");
+}
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  clearLog();
+  const base = apiBase();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const statusEl = document.getElementById("loginStatus");
+
+  if (!base || !username || !password) {
+    log("Fill in API base URL, username, and password first.", "err");
+    return;
+  }
+
+  statusEl.textContent = "Logging in…";
+  try {
+    const res = await fetch(`${base}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.token) {
+      statusEl.textContent = "";
+      log(`Login failed: ${data.error || res.status}`, "err");
+      return;
+    }
+    TOKEN = data.token;
+    statusEl.textContent = "✓ Logged in";
+    statusEl.className = "ok";
+    log("Login successful. Token acquired.", "ok");
+    document.getElementById("previewBtn").disabled = false;
+    document.getElementById("applyBtn").disabled = false;
+  } catch (e) {
+    statusEl.textContent = "";
+    log(`Network error during login: ${e.message}`, "err");
+    log("If this is a CORS error, make sure ALLOWED_ORIGIN on the worker includes the origin this page is served from (or open this file via a local server, not file://).", "warn");
+  }
+});
+
+/* Computes the same remap the backend would apply, purely for preview —
+   fetches products + models directly (read-only endpoints, no auth
+   needed) and shows what WOULD change without writing anything. */
+document.getElementById("previewBtn").addEventListener("click", async () => {
+  const base = apiBase();
+  const resultEl = document.getElementById("previewResult");
+  resultEl.innerHTML = "Checking…";
+  clearLog();
+  try {
+    const [prodRes, modRes] = await Promise.all([
+      fetch(`${base}/api/products`),
+      fetch(`${base}/api/models`)
+    ]);
+    const products = await prodRes.json();
+    const models   = await modRes.json();
+
+    const idSet  = new Set((models || []).map(m => m.id));
+    const byName = new Map((models || []).map(m => [String(m.name || "").trim().toLowerCase(), m.id]));
+
+    let productsAffected = 0;
+    const unmatchedValues = [];
+
+    (Array.isArray(products) ? products : []).forEach(p => {
+      if (!Array.isArray(p.models) || !p.models.length) return;
+      let changed = false;
+      const seen = new Set();
+      p.models.forEach(raw => {
+        const value = String(raw).trim();
+        if (!value) { changed = true; return; }
+        if (idSet.has(value)) {
+          if (seen.has(value)) changed = true;
+          seen.add(value);
+          return;
+        }
+        const mapped = byName.get(value.toLowerCase());
+        if (mapped) {
+          changed = true;
+          if (seen.has(mapped)) changed = true;
+          seen.add(mapped);
+        } else {
+          changed = true;
+          unmatchedValues.push({ product: p.name, value });
+        }
+      });
+      if (changed) {
+        productsAffected++;
+        log(`Would fix: "${p.name}" — [${p.models.join(", ")}]`, "info");
+      }
+    });
+
+    let html = `<div class="${productsAffected ? 'warn' : 'ok'}">
+      ${productsAffected} product(s) would be updated.
+    </div>`;
+    if (unmatchedValues.length) {
+      html += `<div class="err" style="margin-top:6px;">
+        ${unmatchedValues.length} value(s) don't match any current model name and would be dropped
+        (add a matching model in the admin panel first if you want to keep them):
+      </div>`;
+      html += unmatchedValues.map(u =>
+        `<div class="err">&nbsp;&nbsp;• "${u.value}" on "${u.product}"</div>`
+      ).join("");
+    }
+    resultEl.innerHTML = html;
+    log(`Preview complete — ${productsAffected} product(s) would change, ${unmatchedValues.length} unmatched value(s).`, productsAffected ? "warn" : "ok");
+  } catch (e) {
+    resultEl.innerHTML = `<span class="err">Preview failed: ${e.message}</span>`;
+    log(`Preview failed: ${e.message}`, "err");
+  }
+});
+
+document.getElementById("applyBtn").addEventListener("click", async () => {
+  if (!TOKEN) { log("Login first.", "err"); return; }
+  const base = apiBase();
+  const btn  = document.getElementById("applyBtn");
+  btn.disabled = true;
+  clearLog();
+  log("Applying fix — calling backend to relink legacy model values…", "info");
+
+  try {
+    const res = await fetch(`${base}/api/admin/models/normalize`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${TOKEN}` }
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      log(`Failed: ${data.error || res.status}`, "err");
+      btn.disabled = false;
+      return;
+    }
+    log(`✓ Done — ${data.productsTouched} product(s) relinked.`, "ok");
+    const unmatched = Array.isArray(data.unmatched) ? data.unmatched : [];
+    if (unmatched.length) {
+      log(`${unmatched.length} value(s) couldn't be matched and were dropped:`, "warn");
+      unmatched.forEach(u => log(`  • "${u.value}" on "${u.productName}"`, "warn"));
+    } else {
+      log("No unmatched values — everything relinked cleanly.", "ok");
+    }
+    log("You can now verify in the admin panel, then delete this file.", "info");
+  } catch (e) {
+    log(`Network error: ${e.message}`, "err");
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>
