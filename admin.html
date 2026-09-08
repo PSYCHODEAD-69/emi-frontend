@@ -565,6 +565,36 @@
 }
 .cdd-option:hover, .cdd-option.hl { background: var(--surface2); }
 .cdd-option.selected { background: var(--accent); color: #fff; font-weight: 600; }
+
+/* Live pricing preview shown under Original/Discounted Price inputs */
+.pf-price-preview {
+  min-height: 1.4rem;
+  font-size: 0.85rem;
+  padding: 4px 2px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.pf-price-preview.pf-price-error {
+  color: #ef4444;
+  font-weight: 600;
+}
+.pf-price-preview .pc-price-strike {
+  font-family: 'Space Mono', monospace;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.pf-price-preview .pc-price {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: var(--text);
+}
+.pf-price-preview .pc-badge-off {
+  position: static;
+  display: inline-block;
+  background: #ff4d2e; color: #fff;
+  font-size: 0.7rem; font-weight: 800;
+  padding: 3px 9px; border-radius: 20px;
+  box-shadow: none;
+}
   </style>
 </head>
 <body>
@@ -631,6 +661,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6a1 1 0 0 0-1-1h-4"/><path d="M5.5 17.5H15v-6h5.5"/><path d="M15 6l3.5 6"/></svg>
         Models
         <span class="nav-count" id="nc-models">0</span>
+      </button>
+      <button class="nav-item" onclick="switchSection('banners')" id="nav-banners">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Offer Banners
+        <span class="nav-count" id="nc-banners">0</span>
       </button>
     </nav>
 
@@ -841,6 +876,59 @@
       </div>
     </div>
 
+    <!-- ── OFFER BANNERS SECTION ── -->
+    <div class="admin-section" id="section-banners">
+      <div class="section-header">
+        <div class="section-title">Manage Offer Banners</div>
+        <button class="btn-secondary-adm" onclick="loadBanners()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Add New Banner -->
+      <div class="cat-add-block">
+        <div class="section-title" style="margin-bottom:12px;">Add New Banner</div>
+        <p class="cat-form-hint" style="margin-bottom:10px;">Upload a desktop image, a mobile image, or both. If only one is provided it's used for every screen size. Banners appear on the homepage in the order they're added and auto-rotate if there's more than one.</p>
+
+        <div class="cat-form-row" style="align-items:flex-start;">
+          <div style="flex:1; min-width:220px;">
+            <label style="font-size:.82rem; font-weight:600; display:block; margin-bottom:6px;">Desktop Image (wide, ~16:5)</label>
+            <div class="img-upload-row">
+              <input type="text" id="newBannerDesktopUrl" class="adm-input" placeholder="Paste image URL here"/>
+              <label class="img-upload-btn">
+                Upload
+                <input type="file" id="newBannerDesktopFile" accept="image/*" style="display:none" onchange="handleBannerImageUpload(this, 'desktop', null)"/>
+              </label>
+            </div>
+            <div class="prog-bar-wrap" id="newBannerDesktopProg" style="display:none"><div class="prog-bar" id="newBannerDesktopBar"></div></div>
+            <div id="newBannerDesktopPreview"></div>
+          </div>
+          <div style="flex:1; min-width:220px;">
+            <label style="font-size:.82rem; font-weight:600; display:block; margin-bottom:6px;">Mobile Image (optional)</label>
+            <div class="img-upload-row">
+              <input type="text" id="newBannerMobileUrl" class="adm-input" placeholder="Paste image URL here"/>
+              <label class="img-upload-btn">
+                Upload
+                <input type="file" id="newBannerMobileFile" accept="image/*" style="display:none" onchange="handleBannerImageUpload(this, 'mobile', null)"/>
+              </label>
+            </div>
+            <div class="prog-bar-wrap" id="newBannerMobileProg" style="display:none"><div class="prog-bar" id="newBannerMobileBar"></div></div>
+            <div id="newBannerMobilePreview"></div>
+          </div>
+        </div>
+        <button class="save-products-btn" onclick="createBanner()" id="createBannerBtn" style="width:auto; padding:0 20px; margin-top:14px;">+ Add Banner</button>
+      </div>
+
+      <!-- Existing Banners -->
+      <div class="cat-add-block" style="margin-top:20px;">
+        <div class="section-title" style="margin-bottom:12px;">Existing Banners</div>
+        <div id="bannersContainer">
+          <div class="empty-state"><div class="es-icon">🖼️</div><p>Loading banners...</p></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -851,7 +939,13 @@
     <input type="hidden" id="editProductId"/>
     <div class="form-row">
       <div class="form-group"><label>Product Name *</label><input type="text" class="adm-input" id="editName" placeholder="Product name"/></div>
-      <div class="form-group"><label>Price *</label><input type="text" class="adm-input" id="editPrice" placeholder="Rs.299"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Original Price *</label><input type="text" class="adm-input" id="editOrigPrice" placeholder="e.g. 2500" oninput="updatePriceFormPreview('edit')"/></div>
+      <div class="form-group"><label>Discounted Price (optional)</label><input type="text" class="adm-input" id="editDiscPrice" placeholder="e.g. 1999" oninput="updatePriceFormPreview('edit')"/></div>
+    </div>
+    <div class="form-row single">
+      <div class="pf-price-preview" id="edit-price-preview"></div>
     </div>
     <div class="form-row single">
       <div class="form-group"><label>Description</label><textarea class="adm-input" id="editDesc" placeholder="Product description..." rows="3"></textarea></div>
@@ -1267,6 +1361,7 @@ function initAdmin() {
   loadCategories().then(() => addProductForm()); // load categories first so the form dropdown has options
   loadModels();
   loadProducts();
+  loadBanners();
   loadOrders();
   loadReviews();
   cddRefresh(); // wrap editCategory / editStock and any other static selects
@@ -1286,7 +1381,7 @@ function switchSection(name) {
   document.getElementById(`section-${name}`).classList.add('active');
   document.getElementById(`nav-${name}`).classList.add('active');
   document.getElementById('sectionTitle').textContent =
-    { products: 'Products', orders: 'Order History', reviews: 'Reviews', categories: 'Categories', models: 'Models' }[name];
+    { products: 'Products', orders: 'Order History', reviews: 'Reviews', categories: 'Categories', models: 'Models', banners: 'Offer Banners' }[name];
   closeSidebar();
 }
 
@@ -1498,7 +1593,8 @@ function captureProductFormValues() {
     const nameEl = document.getElementById(`pf-name-${i}`);
     if (!nameEl) return; // form for this index isn't rendered yet
     f.name = nameEl.value;
-    f.price = document.getElementById(`pf-price-${i}`)?.value ?? '';
+    f.originalPrice = document.getElementById(`pf-origprice-${i}`)?.value ?? '';
+    f.discountedPrice = document.getElementById(`pf-discprice-${i}`)?.value ?? '';
     f.desc = document.getElementById(`pf-desc-${i}`)?.value ?? '';
     f.cat = document.getElementById(`pf-cat-${i}`)?.value ?? '';
     f.badge = document.getElementById(`pf-badge-${i}`)?.value ?? '';
@@ -1542,11 +1638,19 @@ function renderProductForms() {
 
       <div class="form-row" style="margin-top:.5rem;">
         <div class="form-group"><label>Product Name *</label>
-          <input type="text" class="adm-input" id="pf-name-${i}" placeholder="e.g. Custom Ceramic Mug" value="${escHtml(f.name || '')}"/>
+          <input type="text" class="adm-input" id="pf-name-${i}" placeholder="e.g. Brake Lever Assembly" value="${escHtml(f.name || '')}"/>
         </div>
-        <div class="form-group"><label>Price *</label>
-          <input type="text" class="adm-input" id="pf-price-${i}" placeholder="Rs.249" value="${escHtml(f.price || '')}"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Original Price *</label>
+          <input type="text" class="adm-input" id="pf-origprice-${i}" placeholder="e.g. 2500" value="${escHtml(f.originalPrice || '')}" oninput="updatePriceFormPreview('add:${i}')"/>
         </div>
+        <div class="form-group"><label>Discounted Price (optional)</label>
+          <input type="text" class="adm-input" id="pf-discprice-${i}" placeholder="e.g. 1999" value="${escHtml(f.discountedPrice || '')}" oninput="updatePriceFormPreview('add:${i}')"/>
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="pf-price-preview" id="pf-price-preview-${i}"></div>
       </div>
       <div class="form-row single">
         <div class="form-group"><label>Description</label>
@@ -1595,8 +1699,101 @@ function renderProductForms() {
   productForms.forEach((_, i) => {
     renderMediaGridGeneric(`pf-media-grid-${i}`, `add:${i}`, null);
     renderModelChips(`pf-models-${i}`, `add:${i}`);
+    updatePriceFormPreview(`add:${i}`);
   });
   cddRefresh();
+}
+
+/* ══════════════════════════════
+   PRICING — shared discount calculation + live preview
+   Single source of truth reused by both the "add product" forms and
+   the "edit product" modal, so the discount math never diverges
+   between the two. Mirrors the backend's own calculation exactly
+   (backend is still the final authority — this is preview-only).
+══════════════════════════════ */
+function toPriceNum(v) {
+  const n = parseInt(String(v ?? '0').replace(/[^0-9]/g, ''), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function computeDiscountPercent(originalNum, discountedNum) {
+  if (!originalNum || !discountedNum) return 0;
+  if (discountedNum >= originalNum) return 0;
+  const pct = ((originalNum - discountedNum) / originalNum) * 100;
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.min(99, Math.round(pct));
+}
+
+function formatINR(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n < 0) return '₹0';
+  return '₹' + n.toLocaleString('en-IN');
+}
+
+/* ctx is 'add:0', 'add:1', or 'edit'. Reads the two price inputs for
+   that context, shows a live "% OFF" preview, and flags an inline
+   validation error if discounted > original — without blocking typing
+   (the actual submit-time check happens in the save handlers). */
+function updatePriceFormPreview(ctx) {
+  const isEdit = ctx === 'edit';
+  const origEl = document.getElementById(isEdit ? 'editOrigPrice' : `pf-origprice-${ctx.split(':')[1]}`);
+  const discEl = document.getElementById(isEdit ? 'editDiscPrice' : `pf-discprice-${ctx.split(':')[1]}`);
+  const previewEl = document.getElementById(isEdit ? 'edit-price-preview' : `pf-price-preview-${ctx.split(':')[1]}`);
+  if (!origEl || !previewEl) return;
+
+  const originalNum   = toPriceNum(origEl.value);
+  const discountedRaw = (discEl?.value ?? '').trim();
+  const discountedNum = discountedRaw ? toPriceNum(discountedRaw) : 0;
+
+  if (!originalNum) {
+    previewEl.innerHTML = '';
+    previewEl.className = 'pf-price-preview';
+    return;
+  }
+
+  if (discountedNum > 0 && discountedNum > originalNum) {
+    previewEl.className = 'pf-price-preview pf-price-error';
+    previewEl.innerHTML = `Discounted price cannot be greater than the original price`;
+    return;
+  }
+
+  if (discountedNum > 0 && discountedNum < originalNum) {
+    const pct = computeDiscountPercent(originalNum, discountedNum);
+    previewEl.className = 'pf-price-preview pf-price-ok';
+    previewEl.innerHTML = `<span class="pc-price-strike">${formatINR(originalNum)}</span> <span class="pc-price">${formatINR(discountedNum)}</span> <span class="pc-badge-off pc-badge-off-inline">${pct}% OFF</span>`;
+    return;
+  }
+
+  previewEl.className = 'pf-price-preview';
+  previewEl.innerHTML = `<span class="pc-price">${formatINR(originalNum)}</span> <span style="color:var(--muted, #888); font-size:0.78rem;">No discount</span>`;
+}
+
+/* Validates pricing for a given context before submit. Returns
+   { valid: true, originalPrice, discountedPrice } or { valid: false, error }.
+   discountedPrice is '' (not sent) when there's no real discount. */
+function validatePriceForm(ctx) {
+  const isEdit = ctx === 'edit';
+  const origEl = document.getElementById(isEdit ? 'editOrigPrice' : `pf-origprice-${ctx.split(':')[1]}`);
+  const discEl = document.getElementById(isEdit ? 'editDiscPrice' : `pf-discprice-${ctx.split(':')[1]}`);
+
+  const originalRaw   = (origEl?.value ?? '').trim();
+  const discountedRaw = (discEl?.value ?? '').trim();
+  const originalNum   = toPriceNum(originalRaw);
+  const discountedNum = discountedRaw ? toPriceNum(discountedRaw) : 0;
+
+  if (!originalRaw || !originalNum) {
+    return { valid: false, error: 'Original price is required and must be greater than 0' };
+  }
+  if (discountedNum > 0 && discountedNum > originalNum) {
+    return { valid: false, error: 'Discounted price cannot be greater than the original price' };
+  }
+
+  const hasRealDiscount = discountedNum > 0 && discountedNum < originalNum;
+  return {
+    valid: true,
+    originalPrice:   originalRaw,
+    discountedPrice: hasRealDiscount ? discountedRaw : '',
+  };
 }
 
 /* ══════════════════════════════
@@ -1774,6 +1971,234 @@ async function deleteModelUI(id, name) {
   }, { icon: '🛵', confirmText: 'Delete' });
 }
 
+/* ══════════════════════════════
+   OFFER BANNERS
+   Adapted from the PrintMotive reference implementation. Each banner
+   has an optional desktop image and an optional mobile image (at
+   least one required). Reuses the same uploadFileXHR/guessR2Key
+   helpers as product media uploads, just pointed at the "banners" R2
+   folder. Array order = display order (no drag-reorder UI, matching
+   the reference implementation, which has no active/disable flag or
+   date range either — a banner's presence in the list is what makes
+   it "live").
+══════════════════════════════ */
+let allBanners = [];
+// Holds not-yet-saved image URLs for the "add banner" form
+let newBannerImages = { desktopUrl: '', desktopR2Key: null, mobileUrl: '', mobileR2Key: null };
+
+async function loadBanners() {
+  try {
+    const res = await fetch(`${API}/api/banners`);
+    const data = await res.json();
+    allBanners = Array.isArray(data) ? data : [];
+  } catch (e) {
+    allBanners = [];
+  }
+  renderBannersList();
+  const nc = document.getElementById('nc-banners');
+  if (nc) nc.textContent = allBanners.length;
+}
+
+function renderBannersList() {
+  const cont = document.getElementById('bannersContainer');
+  if (!cont) return;
+
+  if (!allBanners.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="es-icon">🖼️</div><p>No banners yet. Add one above.</p></div>`;
+    return;
+  }
+
+  cont.innerHTML = allBanners.map((b, idx) => `
+    <div class="cat-list-item-wrap" data-banner-id="${escHtml(b.id)}">
+      <div class="cat-list-item">
+        <img class="cat-list-img" style="width:70px;height:44px;object-fit:cover;border-radius:6px;"
+             src="${escHtml(b.desktopUrl || b.mobileUrl || 'https://via.placeholder.com/70x44')}"
+             onerror="this.src='https://via.placeholder.com/70x44'">
+        <div class="cat-list-info">
+          <div class="cat-list-name">Banner ${idx + 1}</div>
+          <div class="cat-list-count">
+            ${b.desktopUrl ? 'Desktop ✓' : 'Desktop —'} &nbsp;·&nbsp; ${b.mobileUrl ? 'Mobile ✓' : 'Mobile —'}
+          </div>
+        </div>
+        <div class="cat-list-actions">
+          <button class="btn-edit" onclick="toggleBannerEditRow('${escHtml(b.id)}')">Edit</button>
+          <button class="btn-del" data-banner-id="${escHtml(b.id)}" onclick="deleteBannerUI(this.dataset.bannerId)">Delete</button>
+        </div>
+      </div>
+      <div class="cat-edit-row" id="banner-edit-row-${escHtml(b.id)}">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%;">
+          <div style="flex:1; min-width:200px;">
+            <label style="font-size:.78rem; font-weight:600; display:block; margin-bottom:4px;">Desktop Image</label>
+            <div class="img-upload-row">
+              <input type="text" class="adm-input" id="banner-edit-desktop-${escHtml(b.id)}" value="${escHtml(b.desktopUrl || '')}" placeholder="Image URL"/>
+              <label class="img-upload-btn">
+                Upload
+                <input type="file" accept="image/*" style="display:none" onchange="handleBannerImageUpload(this, 'desktop', '${escHtml(b.id)}')"/>
+              </label>
+            </div>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <label style="font-size:.78rem; font-weight:600; display:block; margin-bottom:4px;">Mobile Image</label>
+            <div class="img-upload-row">
+              <input type="text" class="adm-input" id="banner-edit-mobile-${escHtml(b.id)}" value="${escHtml(b.mobileUrl || '')}" placeholder="Image URL"/>
+              <label class="img-upload-btn">
+                Upload
+                <input type="file" accept="image/*" style="display:none" onchange="handleBannerImageUpload(this, 'mobile', '${escHtml(b.id)}')"/>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-edit" onclick="saveBannerEdit('${escHtml(b.id)}')">Save</button>
+          <button class="btn-del" onclick="toggleBannerEditRow('${escHtml(b.id)}')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleBannerEditRow(id) {
+  const row = document.getElementById(`banner-edit-row-${id}`);
+  if (row) row.classList.toggle('open');
+}
+
+/* Shared upload handler for both the "add banner" form (bannerId=null)
+   and an existing banner's edit row (bannerId set). Uploads to the
+   "banners" R2 folder and stashes the resulting URL either in the
+   in-memory newBannerImages object (add form) or directly into the
+   matching edit-row text input (existing banner — saved on "Save"). */
+async function handleBannerImageUpload(input, side, bannerId) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (file.size > 40 * 1024 * 1024) {
+    showAdmToast(`${file.name} is too large (max 40MB)`, 'error');
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    showAdmToast(`${file.name} is not a supported image`, 'error');
+    return;
+  }
+
+  const isAdd = !bannerId;
+  const progWrap = isAdd ? document.getElementById(`newBanner${side === 'desktop' ? 'Desktop' : 'Mobile'}Prog`) : null;
+  const bar      = isAdd ? document.getElementById(`newBanner${side === 'desktop' ? 'Desktop' : 'Mobile'}Bar`) : null;
+  if (progWrap) progWrap.style.display = 'block';
+
+  try {
+    const url = await uploadFileXHR(
+      `${API}/api/admin/upload`,
+      file,
+      'banners',
+      token,
+      pct => { if (bar) bar.style.width = pct + '%'; }
+    );
+    const r2Key = guessR2Key(url);
+
+    if (isAdd) {
+      newBannerImages[`${side}Url`] = url;
+      newBannerImages[`${side}R2Key`] = r2Key;
+      const urlInput = document.getElementById(side === 'desktop' ? 'newBannerDesktopUrl' : 'newBannerMobileUrl');
+      if (urlInput) urlInput.value = url;
+      const preview = document.getElementById(side === 'desktop' ? 'newBannerDesktopPreview' : 'newBannerMobilePreview');
+      if (preview) preview.innerHTML = `<img src="${escHtml(url)}" style="width:100%;max-width:220px;border-radius:8px;margin-top:8px;display:block;">`;
+    } else {
+      const urlInput = document.getElementById(`banner-edit-${side}-${bannerId}`);
+      if (urlInput) urlInput.value = url;
+    }
+
+    if (progWrap) progWrap.style.display = 'none';
+    showAdmToast('✓ Image uploaded', 'success');
+  } catch (e) {
+    if (progWrap) progWrap.style.display = 'none';
+    showAdmToast('Upload failed: ' + e.message, 'error');
+  }
+}
+
+async function createBanner() {
+  const desktopUrl = (document.getElementById('newBannerDesktopUrl')?.value || '').trim();
+  const mobileUrl   = (document.getElementById('newBannerMobileUrl')?.value || '').trim();
+
+  if (!desktopUrl && !mobileUrl) {
+    showAdmToast('Provide at least a desktop or mobile image', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('createBannerBtn');
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Adding...';
+
+  try {
+    const res = await apiFetch('/api/admin/banners', 'POST', {
+      desktopUrl,
+      mobileUrl,
+      desktopR2Key: desktopUrl === newBannerImages.desktopUrl ? newBannerImages.desktopR2Key : guessR2Key(desktopUrl),
+      mobileR2Key:  mobileUrl === newBannerImages.mobileUrl ? newBannerImages.mobileR2Key : guessR2Key(mobileUrl),
+    });
+
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Banner added!', 'success');
+      document.getElementById('newBannerDesktopUrl').value = '';
+      document.getElementById('newBannerMobileUrl').value = '';
+      document.getElementById('newBannerDesktopPreview').innerHTML = '';
+      document.getElementById('newBannerMobilePreview').innerHTML = '';
+      newBannerImages = { desktopUrl: '', desktopR2Key: null, mobileUrl: '', mobileR2Key: null };
+      await loadBanners();
+    }
+  } catch (e) {
+    showAdmToast('Failed to add banner', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+async function saveBannerEdit(id) {
+  const desktopUrl = (document.getElementById(`banner-edit-desktop-${id}`)?.value || '').trim();
+  const mobileUrl   = (document.getElementById(`banner-edit-mobile-${id}`)?.value || '').trim();
+
+  if (!desktopUrl && !mobileUrl) {
+    showAdmToast('Provide at least a desktop or mobile image', 'error');
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`/api/admin/banners/${encodeURIComponent(id)}`, 'PUT', {
+      desktopUrl,
+      mobileUrl,
+      desktopR2Key: guessR2Key(desktopUrl),
+      mobileR2Key: guessR2Key(mobileUrl),
+    });
+    if (res.error) {
+      showAdmToast(res.error, 'error');
+    } else {
+      showAdmToast('✓ Banner updated!', 'success');
+      await loadBanners();
+    }
+  } catch (e) {
+    showAdmToast('Failed to update banner', 'error');
+  }
+}
+
+async function deleteBannerUI(id) {
+  showDelModal('Delete this banner?', 'This removes it from the homepage immediately and deletes its image(s) from storage. This cannot be undone.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/banners/${encodeURIComponent(id)}`, 'DELETE');
+      if (res.error) {
+        showAdmToast(res.error, 'error');
+      } else {
+        showAdmToast('✓ Banner deleted', 'success');
+        await loadBanners();
+      }
+    } catch (e) {
+      showAdmToast('Failed to delete banner', 'error');
+    }
+  }, { icon: '🖼️', confirmText: 'Delete' });
+}
+
 /* ── ADD MEDIA FROM PASTED URL ── */
 function detectMediaTypeFromUrl(url) {
   const clean = (url.split('?')[0] || '').toLowerCase();
@@ -1934,16 +2359,31 @@ async function handleNewImgUpload(i, input) {
 }
 async function saveAllProducts() {
   const btn = document.getElementById('saveProductsBtn');
+
+  // Validate pricing for every form BEFORE building the payload — one bad
+  // form should block the whole save rather than silently dropping prices.
+  for (let i = 0; i < productForms.length; i++) {
+    const nameVal = document.getElementById(`pf-name-${i}`)?.value.trim();
+    if (!nameVal) continue; // empty forms are filtered out below anyway
+    const check = validatePriceForm(`add:${i}`);
+    if (!check.valid) {
+      showAdmToast(`Product ${i + 1}: ${check.error}`, 'error');
+      return;
+    }
+  }
+
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Saving...';
 
   const products = productForms.map((_, i) => {
     const media = getMedia(`add:${i}`);
     const firstImage = media.find(m => m.type === 'image');
+    const priceCheck = validatePriceForm(`add:${i}`);
 
     return {
-      name:        document.getElementById(`pf-name-${i}`)?.value.trim() || '',
-      price:       document.getElementById(`pf-price-${i}`)?.value.trim() || '',
+      name:             document.getElementById(`pf-name-${i}`)?.value.trim() || '',
+      originalPrice:    priceCheck.valid ? priceCheck.originalPrice : '',
+      discountedPrice:  priceCheck.valid ? priceCheck.discountedPrice : '',
       description: document.getElementById(`pf-desc-${i}`)?.value.trim() || '',
       category:    document.getElementById(`pf-cat-${i}`)?.value || 'accessories',
       badge:       document.getElementById(`pf-badge-${i}`)?.value.trim() || '',
@@ -1952,10 +2392,10 @@ async function saveAllProducts() {
       media:       media,
       models:      getSelectedModels(`add:${i}`)
     };
-  }).filter(p => p.name && p.price);
+  }).filter(p => p.name && p.originalPrice);
 
   if (!products.length) {
-    showAdmToast('Please fill in at least one product name and price.', 'error');
+    showAdmToast('Please fill in at least one product name and original price.', 'error');
     btn.disabled = false;
     btn.textContent = 'Save Products';
     return;
@@ -2049,7 +2489,11 @@ async function loadProducts() {
         <td><img src="${p.imageUrl || 'https://via.placeholder.com/44'}" class="prod-thumb" onerror="this.src='https://via.placeholder.com/44'" onclick='openAdminLightbox(${JSON.stringify(media).replace(/'/g, "&#39;")}, 0)'></td>
         <td>${escHtml(p.name)}</td>
         <td><span class="badge-cat">${p.category}</span></td>
-        <td style="font-weight:600;">${escHtml(p.price)}</td>
+        <td style="font-weight:600;">
+          ${p.discountedPrice
+            ? `<span style="text-decoration:line-through;color:var(--muted, #888);font-weight:400;font-size:0.82em;">${formatINR(p.originalPriceNum)}</span> ${formatINR(p.discountedPriceNum)} <span style="color:#ff4d2e;font-size:0.75em;">(${p.discountPercent}% OFF)</span>`
+            : formatINR(p.originalPriceNum ?? 0)}
+        </td>
         <td>${modelTags}</td>
         <td>${p.inStock === false ? '<span class="badge-oos">Out of Stock</span>' : '<span class="badge-instock">In Stock</span>'}</td>
         <td>
@@ -2079,13 +2523,15 @@ async function openEditModal(id) {
 
   document.getElementById('editProductId').value  = p.id;
   document.getElementById('editName').value        = p.name;
-  document.getElementById('editPrice').value       = p.price;
+  document.getElementById('editOrigPrice').value    = p.originalPrice ?? '';
+  document.getElementById('editDiscPrice').value    = p.discountedPrice ?? '';
   document.getElementById('editDesc').value        = p.description || '';
   document.getElementById('editCategory').value    = p.category;
   document.getElementById('editBadge').value       = p.badge || '';
   document.getElementById('editStock').value       = p.inStock === false ? 'false' : 'true';
   cddSync(document.getElementById('editCategory'));
   cddSync(document.getElementById('editStock'));
+  updatePriceFormPreview('edit');
 
   // Load existing media (multiple images/videos) or fall back to legacy single image
   const existingMedia = Array.isArray(p.media) && p.media.length
@@ -2130,6 +2576,13 @@ async function handleEditImageUpload(input) {
 
 async function saveEditProduct() {
   const id  = document.getElementById('editProductId').value;
+
+  const priceCheck = validatePriceForm('edit');
+  if (!priceCheck.valid) {
+    showAdmToast(priceCheck.error, 'error');
+    return;
+  }
+
   const btn = document.getElementById('saveEditBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
 
@@ -2138,8 +2591,9 @@ async function saveEditProduct() {
 
   try {
     const res = await apiFetch(`/api/admin/products/${id}`, 'PUT', {
-      name:        document.getElementById('editName').value.trim(),
-      price:       document.getElementById('editPrice').value.trim(),
+      name:             document.getElementById('editName').value.trim(),
+      originalPrice:    priceCheck.originalPrice,
+      discountedPrice:  priceCheck.discountedPrice,
       description: document.getElementById('editDesc').value.trim(),
       category:    document.getElementById('editCategory').value,
       badge:       document.getElementById('editBadge').value.trim(),
