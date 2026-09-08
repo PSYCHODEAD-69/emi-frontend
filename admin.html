@@ -590,7 +590,7 @@
 .pf-price-preview .pc-badge-off {
   position: static;
   display: inline-block;
-  background: #ff4d2e; color: #fff;
+  background: #16a34a; color: #fff;
   font-size: 0.7rem; font-weight: 800;
   padding: 3px 9px; border-radius: 20px;
   box-shadow: none;
@@ -1726,8 +1726,8 @@ function computeDiscountPercent(originalNum, discountedNum) {
 
 function formatINR(amount) {
   const n = Number(amount);
-  if (!Number.isFinite(n) || n < 0) return '₹0';
-  return '₹' + n.toLocaleString('en-IN');
+  if (!Number.isFinite(n) || n < 0) return 'Rs.0';
+  return 'Rs.' + n.toLocaleString('en-IN');
 }
 
 /* ctx is 'add:0', 'add:1', or 'edit'. Reads the two price inputs for
@@ -2491,7 +2491,7 @@ async function loadProducts() {
         <td><span class="badge-cat">${p.category}</span></td>
         <td style="font-weight:600;">
           ${p.discountedPrice
-            ? `<span style="text-decoration:line-through;color:var(--muted, #888);font-weight:400;font-size:0.82em;">${formatINR(p.originalPriceNum)}</span> ${formatINR(p.discountedPriceNum)} <span style="color:#ff4d2e;font-size:0.75em;">(${p.discountPercent}% OFF)</span>`
+            ? `<span style="text-decoration:line-through;color:var(--muted, #888);font-weight:400;font-size:0.82em;">${formatINR(p.originalPriceNum)}</span> ${formatINR(p.discountedPriceNum)} <span style="color:#16a34a;font-size:0.75em;">(${p.discountPercent}% OFF)</span>`
             : formatINR(p.originalPriceNum ?? 0)}
         </td>
         <td>${modelTags}</td>
